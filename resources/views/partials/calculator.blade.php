@@ -14,6 +14,36 @@
     })->values();
 @endphp
 
+<script>
+window.calcData = {
+    services: {
+        @foreach($calculatorServices as $service)
+        "{{ $service->name }}": {
+            slug: "{{ $service->slug }}",
+            type: "{{ $service->pricing_mode }}", // 'range' или 'frequency'
+            @if($service->pricing_mode === 'frequency')
+                {{-- Если цена зависит от частоты, собираем диапазоны для каждой частоты --}}
+                frequencies: {
+                    @foreach($service->frequencies as $freq)
+                    "{{ $freq->name }}": "{{ $freq->priceRanges->map(fn($r) => $r->min_sqm.'-'.($r->max_sqm?? 999).': '.$r->price)->join('|') }}",
+                    @endforeach
+                },
+            @else
+                {{-- Если цена обычная (по диапазонам), собираем строку диапазонов --}}
+                ranges: "{{ $service->priceRanges->map(fn($r) => $r->min_sqm.'-'.($r->max_sqm?? 999).': '.$r->price)->join('|') }}",
+            @endif
+            {{-- Список доп. услуг --}}
+            supplements: [
+                @foreach($service->addons as $addon)
+                { name: "{{ $addon->name }}", price: {{ $addon->price }} },
+                @endforeach
+            ]
+        },
+        @endforeach
+    }
+};
+</script>
+
 <section id="calculator" class="price-calculator section section-soft">
   <div class="container">
     <div class="section-head">

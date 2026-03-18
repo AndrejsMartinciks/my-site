@@ -1098,4 +1098,34 @@ body.has-cookie-banner {
   .price-calculator .calc-summary-row strong {
     text-align: left;
   }
+  /* Стиль для акцентной ссылки в меню */
+.nav-highlight {
+  background-color: transparent;
+  color: var(--primary)!important;
+  border: 2px solid var(--primary);
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-highlight:hover {
+  background-color: var(--primary);
+  color: #ffffff!important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
+}
+
+/* Адаптация для мобильного меню */
+@media (max-width: 991px) {
+ .nav-highlight {
+    display: block;
+    text-align: center;
+    margin: 15px 0;
+    border-width: 1px;
+    padding: 12px;
+  }
+}
 }

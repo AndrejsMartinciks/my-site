@@ -10,6 +10,7 @@ class Booking extends Model
     protected $fillable = [
         'service_id',
         'booking_slot_id',
+        'booking_type',
         'booking_date',
         'time_from',
         'time_to',
@@ -17,9 +18,12 @@ class Booking extends Model
         'personnummer',
         'personnummer_last4',
         'address',
+        'postcode',
         'phone',
         'email',
         'sqm',
+        'window_count',
+        'cleaning_scope',
         'quoted_price',
         'addons',
         'calculator_summary',
@@ -29,24 +33,16 @@ class Booking extends Model
         'done_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'booking_date' => 'date',
-            'addons' => 'array',
-            'personnummer' => 'encrypted',
-            'contacted_at' => 'datetime',
-            'done_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'booking_date' => 'date',
+        'addons' => 'array',
+        'personnummer' => 'encrypted',
+        'contacted_at' => 'datetime',
+        'done_at' => 'datetime',
+    ];
 
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
-    }
-
-    public function bookingSlot(): BelongsTo
-    {
-        return $this->belongsTo(BookingSlot::class);
     }
 }

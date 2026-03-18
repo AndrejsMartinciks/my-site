@@ -23,6 +23,9 @@ class ServiceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Services';
+    protected static ?string $modelLabel = 'Service';
+    protected static ?string $pluralModelLabel = 'Services';
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -36,13 +39,13 @@ class ServiceResource extends Resource
     }
 
     public static function getRelations(): array
-{
-    return [
-        FrequenciesRelationManager::class,
-        PriceRangesRelationManager::class,
-        AddonsRelationManager::class,
-    ];
-}
+    {
+        return [
+            FrequenciesRelationManager::class,
+            PriceRangesRelationManager::class,
+            AddonsRelationManager::class,
+        ];
+    }
 
     public static function getPages(): array
     {

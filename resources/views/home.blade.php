@@ -30,8 +30,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-  <title>{{ $seoTitle }}</title>
-<meta name="description" content="{{ $seoDescription }}" />
+  <title>{{ $siteSettings->seo_title?? 'CleanS AB | Hemstädning i Stockholm' }}</title>
+  <meta name="description" content="{{ $siteSettings->seo_description?? 'Professionell städning i Stockholm.' }}">
   <meta name="theme-color" content="#0f766e" />
   <link rel="canonical" href="https://cleans.se/">
 
@@ -110,6 +110,7 @@
         <a href="#rut">RUT-avdrag</a>
         <a href="#about">Om oss</a>
         <a href="#faq">FAQ</a>
+        <a href="{{ route('window-cleaning') }}" class="nav-highlight">Fönsterputsning</a>
         <a href="#contact" class="btn btn-sm btn-primary">Boka nu</a>
       </nav>
     </div>
@@ -123,8 +124,9 @@
 <h1>{{ $heroTitle }}</h1>
 <p class="lead">{{ $heroText }}</p>
 <div class="hero-actions">
-  <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
-  <a href="#services" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
+    <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
+    <a href="#services" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
+    <a href="{{ route('window-cleaning') }}" class="btn btn-outline-white">Boka fönsterputs</a>
 </div>
           <ul class="hero-points" aria-label="Våra styrkor">
             <li>50% RUT-avdrag direkt på fakturan</li>
@@ -424,28 +426,16 @@
     </div>
 
     <div class="testimonial-grid">
-      @forelse($testimonials as $testimonial)
-        <blockquote class="testimonial-card">
-          <p>"{{ $testimonial->text }}"</p>
-          <footer>
-            {{ $testimonial->name }}@if($testimonial->city), {{ $testimonial->city }}@endif
-          </footer>
-        </blockquote>
-      @empty
-        <blockquote class="testimonial-card">
-          <p>"Snabb offert, trevligt bemötande och mycket noggrann hemstädning. Vi bokade direkt ett återkommande upplägg."</p>
-          <footer>Anna, Bromma</footer>
-        </blockquote>
-        <blockquote class="testimonial-card">
-          <p>"Flyttstädningen gick smidigt och allt var klart i tid till överlämningen. Mycket professionellt."</p>
-          <footer>Johan, Solna</footer>
-        </blockquote>
-        <blockquote class="testimonial-card">
-          <p>"Bra kommunikation hela vägen och tydliga priser. Det känns tryggt att anlita dem igen."</p>
-          <footer>Elin, Hägersten</footer>
-        </blockquote>
-      @endforelse
-    </div>
+    @foreach($testimonials as $testimonial)
+        <div class="testimonial-card">
+            <p>"{{ $testimonial->content }}"</p>
+            <strong>{{ $testimonial->name }}</strong>
+            @if($testimonial->city)
+                <span>{{ $testimonial->city }}</span>
+            @endif
+        </div>
+    @endforeach
+</div>
   </div>
 </section>
 
@@ -559,13 +549,14 @@
       </div>
     </section>
 
-    <section class="faq section" id="faq">
+<section id="faq" class="faq section">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Vanliga frågor</span>
-      <h2>Svar på det kunder oftast undrar</h2>
+      <span class="eyebrow">FAQ</span>
+      <h2>Vanliga frågor</h2>
     </div>
 
+    <section class="faq section" id="faq">
     <div class="faq-list">
       @forelse($faqs as $faq)
         <details>
@@ -574,26 +565,15 @@
         </details>
       @empty
         <details>
-          <summary>Tar ni med eget städmaterial?</summary>
-          <p>Ja, i standardupplägget räknar vi med att ta med professionellt material och utrustning.</p>
-        </details>
-        <details>
-          <summary>Hur fungerar RUT-avdraget?</summary>
-          <p>Vi redovisar avdraget direkt på fakturan om du uppfyller villkoren som privatperson i Sverige.</p>
-        </details>
-        <details>
-          <summary>Kan jag boka både flytthjälp och flyttstädning?</summary>
-          <p>Absolut. Vi kan samordna tjänsterna så att övergången blir enklare och mer tidseffektiv.</p>
-        </details>
-        <details>
-          <summary>Hur snabbt får jag en offert?</summary>
-          <p>Normalt svarar vi inom 24 timmar på vardagar, ofta snabbare för enkla förfrågningar.</p>
+          <summary>{{ $faq->question }}</summary>
+          <p>{{ $faq->answer }}</p>
         </details>
       @endforelse
     </div>
   </div>
 </section>
-  </main>
+
+</main>
 
   <footer class="site-footer">
     <div class="container footer-grid">

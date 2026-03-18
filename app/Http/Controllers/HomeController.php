@@ -13,15 +13,7 @@ class HomeController extends Controller
     {
         $siteSettings = SiteSetting::query()->latest()->first();
 
-        $services = Service::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->with([
-                'frequencies.priceRanges',
-                'priceRanges',
-                'addons' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order'),
-            ])
-            ->get();
+        $services = $this->getActiveServices();
 
         $faqs = Faq::query()
             ->where('is_active', true)
@@ -33,7 +25,56 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $calculatorData = [
+        $calculatorData = $this->buildCalculatorData($services);
+
+        return view('home', compact(
+            'siteSettings',
+            'services',
+            'faqs',
+            'testimonials',
+            'calculatorData'
+        ));
+    }
+
+    public function windowCleaning()
+    {
+        $siteSettings = SiteSetting::query()->latest()->first();
+
+        $service = Service::query()
+            ->where('slug', 'fonsterputsning')
+            ->where('is_active', true)
+            ->with([
+                'frequencies.priceRanges',
+                'priceRanges',
+                'addons' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order'),
+            ])
+            ->firstOrFail();
+
+        $calculatorData = $this->buildCalculatorData(collect([$service]));
+
+        return view('window-cleaning', compact(
+            'siteSettings',
+            'service',
+            'calculatorData'
+        ));
+    }
+
+    private function getActiveServices()
+    {
+        return Service::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->with([
+                'frequencies.priceRanges',
+                'priceRanges',
+                'addons' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order'),
+            ])
+            ->get();
+    }
+
+    private function buildCalculatorData($services)
+    {
+        return [
             'services' => $services->mapWithKeys(function ($service) {
                 $serviceData = [
                     'type' => $service->pricing_mode,
@@ -62,13 +103,5 @@ class HomeController extends Controller
                 return [$service->name => $serviceData];
             })->all(),
         ];
-
-        return view('home', compact(
-            'siteSettings',
-            'services',
-            'faqs',
-            'testimonials',
-            'calculatorData'
-        ));
     }
 }

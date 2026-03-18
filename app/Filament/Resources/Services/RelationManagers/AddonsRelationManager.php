@@ -2,13 +2,9 @@
 
 namespace App\Filament\Resources\Services\RelationManagers;
 
-use Filament\Actions\AssociateAction;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\DissociateAction;
-use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -17,72 +13,84 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class AddonsRelationManager extends RelationManager
 {
     protected static string $relationship = 'addons';
 
+    protected static ?string $title = 'Addons';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return $ownerRecord->slug === 'fonsterputsning'
+            ? 'Window addons'
+            : 'Addons';
+    }
+
     public function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('price')
-                    ->required()
-                    ->numeric()
-                    ->default(0)
-                    ->prefix('$'),
-                Toggle::make('is_active')
-                    ->required(),
-                TextInput::make('sort_order')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-            ]);
+        $ownerRecord = $this->getOwnerRecord();
+        $isWindowCleaning = $ownerRecord?->slug === 'fonsterputsning';
+
+        return $schema->components([
+            TextInput::make('name')
+                ->label($isWindowCleaning ? 'Addon name' : 'Namn')
+                ->required()
+                ->maxLength(255),
+
+            TextInput::make('price')
+                ->label($isWindowCleaning ? 'Addon price' : 'Pris')
+                ->numeric()
+                ->required()
+                ->default(0),
+
+            Toggle::make('is_active')
+                ->label('Aktiv')
+                ->default(true),
+
+            TextInput::make('sort_order')
+                ->label('Sortering')
+                ->numeric()
+                ->required()
+                ->default(0),
+        ]);
     }
 
     public function table(Table $table): Table
     {
+        $ownerRecord = $this->getOwnerRecord();
+        $isWindowCleaning = $ownerRecord?->slug === 'fonsterputsning';
+
         return $table
-            ->recordTitleAttribute('name')
+            ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('name')
+                    ->label($isWindowCleaning ? 'Addon' : 'Namn')
                     ->searchable(),
+
                 TextColumn::make('price')
-                    ->money()
+                    ->label('Pris')
+                    ->suffix(' kr')
                     ->sortable(),
+
                 IconColumn::make('is_active')
+                    ->label('Aktiv')
                     ->boolean(),
+
                 TextColumn::make('sort_order')
-                    ->numeric()
+                    ->label('Sortering')
                     ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
             ])
             ->headerActions([
                 CreateAction::make(),
-                AssociateAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DissociateBulkAction::make(),
-                    DeleteBulkAction::make(),
-                ]),
+            ->bulkActions([
+                DeleteBulkAction::make(),
             ]);
     }
 }
