@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\WindowCleaningBookingResource\Pages;
 
 use App\Filament\Resources\WindowCleaningBookingResource;
+use App\Filament\Widgets\WindowCleaningStatsOverview;
 use App\Models\Booking;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -15,6 +16,13 @@ class ListWindowCleaningBookings extends ListRecords
     protected function getHeaderActions(): array
     {
         return [];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            WindowCleaningStatsOverview::class,
+        ];
     }
 
     public function getTabs(): array
@@ -36,6 +44,10 @@ class ListWindowCleaningBookings extends ListRecords
             'confirmed' => Tab::make('Confirmed')
                 ->badge((clone $baseQuery)->where('status', 'confirmed')->count())
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'confirmed')),
+
+            'in_progress' => Tab::make('In progress')
+                ->badge((clone $baseQuery)->where('status', 'in_progress')->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'in_progress')),
 
             'done' => Tab::make('Done')
                 ->badge((clone $baseQuery)->where('status', 'done')->count())

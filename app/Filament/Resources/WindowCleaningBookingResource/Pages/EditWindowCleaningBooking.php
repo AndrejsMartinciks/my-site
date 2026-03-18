@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WindowCleaningBookingResource\Pages;
 use App\Filament\Resources\WindowCleaningBookingResource;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
 
 class EditWindowCleaningBooking extends EditRecord
 {
@@ -34,6 +35,27 @@ class EditWindowCleaningBooking extends EditRecord
             'status',
             'manager_note',
         ]);
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $updateData = $data;
+
+        if (($data['status'] ?? null) === 'contacted' && empty($record->contacted_at)) {
+            $updateData['contacted_at'] = now();
+        }
+
+        if (($data['status'] ?? null) === 'done' && empty($record->done_at)) {
+            $updateData['done_at'] = now();
+        }
+
+        if (($data['status'] ?? null) !== 'done' && $record->done_at && ($data['status'] ?? null) !== 'done') {
+            $updateData['done_at'] = null;
+        }
+
+        $record->update($updateData);
+
+        return $record;
     }
 
     protected function getSavedNotificationTitle(): ?string

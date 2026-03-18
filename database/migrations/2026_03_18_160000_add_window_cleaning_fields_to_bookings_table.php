@@ -9,25 +9,44 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->string('booking_type', 50)->nullable()->after('service_id');
-            $table->string('postcode', 20)->nullable()->after('address');
-            $table->unsignedInteger('window_count')->nullable()->after('sqm');
-            $table->string('cleaning_scope', 20)->nullable()->after('window_count');
+            if (! Schema::hasColumn('bookings', 'booking_type')) {
+                $table->string('booking_type', 50)->nullable()->after('service_id');
+                $table->index('booking_type');
+            }
 
-            $table->index('booking_type');
+            if (! Schema::hasColumn('bookings', 'postcode')) {
+                $table->string('postcode', 20)->nullable()->after('address');
+            }
+
+            if (! Schema::hasColumn('bookings', 'window_count')) {
+                $table->unsignedInteger('window_count')->nullable()->after('sqm');
+            }
+
+            if (! Schema::hasColumn('bookings', 'cleaning_scope')) {
+                $table->string('cleaning_scope', 20)->nullable()->after('window_count');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropIndex(['booking_type']);
-            $table->dropColumn([
-                'booking_type',
-                'postcode',
-                'window_count',
-                'cleaning_scope',
-            ]);
+            if (Schema::hasColumn('bookings', 'booking_type')) {
+                $table->dropIndex(['booking_type']);
+                $table->dropColumn('booking_type');
+            }
+
+            if (Schema::hasColumn('bookings', 'postcode')) {
+                $table->dropColumn('postcode');
+            }
+
+            if (Schema::hasColumn('bookings', 'window_count')) {
+                $table->dropColumn('window_count');
+            }
+
+            if (Schema::hasColumn('bookings', 'cleaning_scope')) {
+                $table->dropColumn('cleaning_scope');
+            }
         });
     }
 };

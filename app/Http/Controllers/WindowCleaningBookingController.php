@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\WindowCleaningAdminNotification;
+use App\Mail\WindowCleaningCustomerConfirmation;
 use App\Models\Booking;
 use App\Models\Service;
+use App\Models\SiteSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class WindowCleaningBookingController extends Controller
 {
@@ -63,6 +69,27 @@ class WindowCleaningBookingController extends Controller
         $timeFrom = Carbon::createFromFormat('H:i', $validated['time_from']);
         $timeTo = (clone $timeFrom)->addMinutes(120);
 
+        $bookingDate = Carbon::parse($validated['booking_date'])->format('Y-m-d');
+
+        $conflictExists = Booking::query()
+            ->whereDate('booking_date', $bookingDate)
+            ->whereNotIn('status', ['cancelled'])
+            ->where(function ($query) use ($timeFrom, $timeTo) {
+                $query
+                    ->where(function ($subQuery) use ($timeFrom, $timeTo) {
+                        $subQuery
+                            ->where('time_from', '<', $timeTo->format('H:i:s'))
+                            ->where('time_to', '>', $timeFrom->format('H:i:s'));
+                    });
+            })
+            ->exists();
+
+        if ($conflictExists) {
+            throw ValidationException::withMessages([
+                'time_from' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
+            ]);
+        }
+
         $personnummerDigits = preg_replace('/\D+/', '', $validated['personnummer']);
         $personnummerLast4 = substr($personnummerDigits, -4);
 
@@ -72,47 +99,90 @@ class WindowCleaningBookingController extends Controller
             'both' => 'In- och utvändigt',
         ];
 
-        Booking::create([
-            'service_id' => $service->id,
-            'booking_type' => 'window_cleaning',
-            'booking_date' => $validated['booking_date'],
-            'time_from' => $timeFrom->format('H:i:s'),
-            'time_to' => $timeTo->format('H:i:s'),
+        $booking = DB::transaction(function () use (
+            $service,
+            $validated,
+            $bookingDate,
+            $timeFrom,
+            $timeTo,
+            $personnummerLast4,
+            $addons,
+            $basePrice,
+            $scopeMultiplier,
+            $scopeAdjustedBasePrice,
+            $addonsTotal,
+            $quotedPrice,
+            $scopeLabels
+        ) {
+            $conflictExistsInsideTransaction = Booking::query()
+                ->whereDate('booking_date', $bookingDate)
+                ->whereNotIn('status', ['cancelled'])
+                ->where('time_from', '<', $timeTo->format('H:i:s'))
+                ->where('time_to', '>', $timeFrom->format('H:i:s'))
+                ->lockForUpdate()
+                ->exists();
 
-            'customer_name' => $validated['customer_name'],
-            'personnummer' => $validated['personnummer'],
-            'personnummer_last4' => $personnummerLast4,
-            'address' => trim($validated['address'] . ', ' . $validated['postcode']),
-            'postcode' => $validated['postcode'],
-            'phone' => $validated['phone'],
-            'email' => $validated['email'],
+            if ($conflictExistsInsideTransaction) {
+                throw ValidationException::withMessages([
+                    'time_from' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
+                ]);
+            }
 
-            'sqm' => (int) $validated['window_count'],
-            'window_count' => (int) $validated['window_count'],
-            'cleaning_scope' => $validated['cleaning_scope'],
-            'quoted_price' => $quotedPrice,
+            return Booking::create([
+                'service_id' => $service->id,
+                'booking_type' => 'window_cleaning',
+                'booking_date' => $bookingDate,
+                'time_from' => $timeFrom->format('H:i:s'),
+                'time_to' => $timeTo->format('H:i:s'),
 
-            'addons' => $addons->map(fn ($addon) => [
-                'id' => $addon->id,
-                'name' => $addon->name,
-                'price' => (int) $addon->price,
-            ])->values()->all(),
+                'customer_name' => $validated['customer_name'],
+                'personnummer' => $validated['personnummer'],
+                'personnummer_last4' => $personnummerLast4,
+                'address' => trim($validated['address']),
+                'postcode' => $validated['postcode'],
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
 
-            'calculator_summary' => json_encode([
-                'service' => $service->name,
+                'sqm' => (int) $validated['window_count'],
                 'window_count' => (int) $validated['window_count'],
-                'cleaning_scope' => $scopeLabels[$validated['cleaning_scope']] ?? $validated['cleaning_scope'],
-                'base_price' => $basePrice,
-                'scope_multiplier' => $scopeMultiplier,
-                'scope_adjusted_base_price' => $scopeAdjustedBasePrice,
-                'addons_total' => $addonsTotal,
+                'cleaning_scope' => $validated['cleaning_scope'],
                 'quoted_price' => $quotedPrice,
-                'addons' => $addons->pluck('name')->values()->all(),
-                'message' => $validated['message'] ?? null,
-            ], JSON_UNESCAPED_UNICODE),
 
-            'status' => 'new',
-        ]);
+                'addons' => $addons->map(fn ($addon) => [
+                    'id' => $addon->id,
+                    'name' => $addon->name,
+                    'price' => (int) $addon->price,
+                ])->values()->all(),
+
+                'calculator_summary' => json_encode([
+                    'service' => $service->name,
+                    'window_count' => (int) $validated['window_count'],
+                    'cleaning_scope' => $scopeLabels[$validated['cleaning_scope']] ?? $validated['cleaning_scope'],
+                    'base_price' => $basePrice,
+                    'scope_multiplier' => $scopeMultiplier,
+                    'scope_adjusted_base_price' => $scopeAdjustedBasePrice,
+                    'addons_total' => $addonsTotal,
+                    'quoted_price' => $quotedPrice,
+                    'addons' => $addons->pluck('name')->values()->all(),
+                    'message' => $validated['message'] ?? null,
+                ], JSON_UNESCAPED_UNICODE),
+
+                'status' => 'new',
+            ]);
+        });
+
+        $siteSettings = SiteSetting::query()->latest()->first();
+        $adminEmail = $siteSettings?->email ?: config('mail.from.address');
+
+        try {
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new WindowCleaningAdminNotification($booking));
+            }
+
+            Mail::to($booking->email)->send(new WindowCleaningCustomerConfirmation($booking));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()
             ->route('window-cleaning')
