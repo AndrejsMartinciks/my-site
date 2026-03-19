@@ -55,12 +55,12 @@ async function submitToServer(formData) {
       throw new Error('Sessionen har uppdaterats. Ladda om sidan och försök igen.');
     }
 
-    if (response.status === 422 && data?.errors) {
-      const firstValidationError = Object.values(data.errors).flat()[0];
-      throw new Error(firstValidationError || 'Kontrollera formuläret och försök igen.');
+    if (response.status === 422 && data.errors) {
+      const firstError = Object.values(data.errors).flat()[0];
+      throw new Error(firstError || 'Kontrollera formuläret och försök igen.');
     }
 
-    throw new Error(data.message || data.error || 'Något gick fel när formuläret skickades.');
+    throw new Error(data.message || 'Kunde inte skicka formuläret till servern.');
   }
 
   return data;
@@ -146,58 +146,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const calcData = window.calcData || { services: {} };
+(function initCalculator() {
+  const calcData = window.calcData || { services: {} };
 
-function parsePriceRanges(rangeString) {
-  if (!rangeString) return [];
-
-  return rangeString.split('|').map((item) => {
-    const [rangePart, pricePart] = item.split(':').map((v) => v.trim());
-    const [min, max] = rangePart.split('-').map((v) => Number(v.trim()));
-
-    return {
-      min,
-      max,
-      price: Number(pricePart),
-    };
-  });
-}
-
-function getPriceFromRanges(rangeString, sqm) {
-  const ranges = parsePriceRanges(rangeString);
-  const match = ranges.find((item) => sqm >= item.min && sqm <= item.max);
-
-  return match ? match.price : null;
-}
-
-function formatPrice(value) {
-  return new Intl.NumberFormat('sv-SE').format(value);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
   const serviceEl = document.getElementById('calc-service');
   const sqmEl = document.getElementById('calc-sqm');
   const frequencyWrap = document.getElementById('calc-frequency-wrap');
   const frequencyList = document.getElementById('calc-frequency-list');
   const supplementsWrap = document.getElementById('calc-supplements-wrap');
   const supplementsList = document.getElementById('calc-supplements-list');
-
   const bookingWrap = document.getElementById('calc-booking-wrap');
   const bookingDateEl = document.getElementById('calc-booking-date');
   const bookingStatusEl = document.getElementById('calc-booking-status');
   const bookingSlotsEl = document.getElementById('calc-booking-slots');
-
-  const bookingForm = document.getElementById('booking-form');
-  const bookingServiceSelect = bookingForm?.querySelector('select[name="service"]');
-
-  const bookingCustomerFields = document.getElementById('booking-customer-fields');
-  const bookingSlotIdInput = document.getElementById('booking-slot-id-input');
-  const bookingDateInput = document.getElementById('booking-date-input');
-  const bookingTimeFromInput = document.getElementById('booking-time-from-input');
-  const bookingTimeToInput = document.getElementById('booking-time-to-input');
-
-  const bookingPersonnummerInput = document.getElementById('booking-personnummer');
-  const bookingAddressInput = document.getElementById('booking-address');
 
   const totalEl = document.getElementById('calc-total-price');
   const messageEl = document.getElementById('calc-message');
@@ -208,115 +169,97 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryFrequencyRow = document.getElementById('calc-summary-frequency-row');
   const summaryFrequency = document.getElementById('calc-summary-frequency');
   const summarySupplements = document.getElementById('calc-summary-supplements');
+  const summarySlotRow = document.getElementById('calc-summary-slot-row');
+  const summarySlot = document.getElementById('calc-summary-slot');
 
-  const bookingServiceName = 'Engångsstädning';
-  const bookingServiceSlug = 'engangsstadning';
+  const formServiceEl = document.getElementById('contact-service');
+  const calculatorSummaryInput = document.getElementById('calculator-summary-input');
+  const bookingSlotIdInput = document.getElementById('booking-slot-id-input');
+  const bookingDateInput = document.getElementById('booking-date-input');
+  const bookingTimeFromInput = document.getElementById('booking-time-from-input');
+  const bookingTimeToInput = document.getElementById('booking-time-to-input');
+  const bookingCustomerFields = document.getElementById('booking-customer-fields');
+  const personnummerInput = document.getElementById('booking-personnummer');
+  const addressInput = document.getElementById('booking-address');
+
+  if (!serviceEl || !sqmEl || !totalEl || !applyBtn) return;
 
   let selectedBookingSlot = null;
+
+  function normalizeText(value = '') {
+    return String(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  function slugify(value = '') {
+    return normalizeText(value)
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function isBookingService(serviceName = '') {
+    return slugify(serviceName) === 'engangsstadning';
+  }
+
+  function getServiceData(serviceName) {
+    return calcData.services?.[serviceName] || null;
+  }
+
+  function parseRanges(rangeString = '') {
+    return String(rangeString)
+      .split('|')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const match = item.match(/(\d+)\s*-\s*(\d+)\s*:\s*(\d+)/);
+
+        if (!match) return null;
+
+        return {
+          min: Number(match[1]),
+          max: Number(match[2]),
+          price: Number(match[3]),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function getPriceFromRanges(rangeString, sqm) {
+    const ranges = parseRanges(rangeString);
+
+    const found = ranges.find((range) => sqm >= range.min && sqm <= range.max);
+    return found ? found.price : null;
+  }
 
   function getSelectedFrequency() {
     const checked = document.querySelector('input[name="calc-frequency"]:checked');
     return checked ? checked.value : '';
   }
 
-  function isBookingService(serviceName) {
-    return serviceName === bookingServiceName;
+  function getSelectedSupplementItems() {
+    return [...document.querySelectorAll('.calc-supplement:checked')].map((el) => ({
+      name: el.dataset.name || '',
+      price: Number(el.dataset.price || 0),
+    }));
   }
 
-  function normalizePersonnummerValue(value) {
-    return (value || '').replace(/[^\d]/g, '');
+  function getSupplementsTotal() {
+    return getSelectedSupplementItems().reduce((sum, item) => sum + item.price, 0);
   }
 
-  function formatPersonnummerForDisplay(value) {
-    const digits = normalizePersonnummerValue(value);
-
-    if (digits.length <= 6) {
-      return digits;
-    }
-
-    if (digits.length <= 10) {
-      return `${digits.slice(0, 6)}-${digits.slice(6, 10)}`;
-    }
-
-    return `${digits.slice(0, 8)}-${digits.slice(8, 12)}`;
+  function clearBookingHiddenInputs() {
+    if (bookingSlotIdInput) bookingSlotIdInput.value = '';
+    if (bookingDateInput) bookingDateInput.value = '';
+    if (bookingTimeFromInput) bookingTimeFromInput.value = '';
+    if (bookingTimeToInput) bookingTimeToInput.value = '';
   }
 
-  function clearPersonnummerValidity() {
-    if (bookingPersonnummerInput) {
-      bookingPersonnummerInput.setCustomValidity('');
-    }
-  }
-
-  function showPersonnummerValidity(message) {
-    if (!bookingPersonnummerInput) return;
-
-    bookingPersonnummerInput.setCustomValidity(message);
-    bookingPersonnummerInput.reportValidity();
-  }
-
-  function isValidSwedishPersonnummer(value) {
-  const digits = normalizePersonnummerValue(value);
-
-  // На локальной разработке разрешаем любой номер длиной 10 или 12 цифр
-  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-
-  if (isLocalHost) {
-    return [10, 12].includes(digits.length);
-  }
-
-  if (![10, 12].includes(digits.length)) {
-    return false;
-  }
-
-  const tenDigits = digits.length === 12 ? digits.slice(-10) : digits;
-  let sum = 0;
-
-  for (let i = 0; i < tenDigits.length; i += 1) {
-    let number = Number(tenDigits[i]);
-
-    if (i % 2 === 0) {
-      number *= 2;
-
-      if (number > 9) {
-        number -= 9;
-      }
-    }
-
-    sum += number;
-  }
-
-  return sum % 10 === 0;
-}
-
-  function toggleBookingCustomerFields(serviceName) {
-    const isBooking = isBookingService(serviceName);
-
-    if (bookingCustomerFields) {
-      bookingCustomerFields.hidden = !isBooking;
-    }
-
-    if (bookingPersonnummerInput) {
-      bookingPersonnummerInput.required = isBooking;
-    }
-
-    if (bookingAddressInput) {
-      bookingAddressInput.required = isBooking;
-    }
-
-    if (!isBooking) {
-      if (bookingSlotIdInput) bookingSlotIdInput.value = '';
-      if (bookingDateInput) bookingDateInput.value = '';
-      if (bookingTimeFromInput) bookingTimeFromInput.value = '';
-      if (bookingTimeToInput) bookingTimeToInput.value = '';
-    }
-
-    clearPersonnummerValidity();
-  }
-
-  function resetBookingState(options = {}) {
-    const { clearDate = false } = options;
-
+  function resetBookingState({ clearDate = false } = {}) {
     selectedBookingSlot = null;
+    clearBookingHiddenInputs();
 
     if (bookingSlotsEl) {
       bookingSlotsEl.innerHTML = '';
@@ -326,22 +269,41 @@ document.addEventListener('DOMContentLoaded', () => {
       bookingStatusEl.textContent = '';
     }
 
+    if (summarySlotRow) {
+      summarySlotRow.hidden = true;
+    }
+
+    if (summarySlot) {
+      summarySlot.textContent = '-';
+    }
+
     if (clearDate && bookingDateEl) {
       bookingDateEl.value = '';
     }
-
-    if (bookingSlotIdInput) bookingSlotIdInput.value = '';
-    if (bookingDateInput) bookingDateInput.value = '';
-    if (bookingTimeFromInput) bookingTimeFromInput.value = '';
-    if (bookingTimeToInput) bookingTimeToInput.value = '';
   }
 
-  function renderFrequencies(serviceName) {
-    if (!frequencyList || !frequencyWrap) return;
+  function toggleBookingCustomerFields(serviceName = '') {
+    const bookingMode = isBookingService(serviceName);
 
-    const service = calcData.services[serviceName];
-    const selectedFrequency = getSelectedFrequency();
+    if (bookingCustomerFields) {
+      bookingCustomerFields.hidden = !bookingMode;
+    }
 
+    if (personnummerInput) {
+      personnummerInput.required = bookingMode;
+      if (!bookingMode) personnummerInput.value = '';
+    }
+
+    if (addressInput) {
+      addressInput.required = bookingMode;
+      if (!bookingMode) addressInput.value = '';
+    }
+  }
+
+  function renderFrequencyOptions(serviceName) {
+    if (!frequencyWrap || !frequencyList) return;
+
+    const service = getServiceData(serviceName);
     frequencyList.innerHTML = '';
 
     if (!service || service.type !== 'frequency' || !service.frequencies) {
@@ -349,40 +311,249 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const frequencyNames = Object.keys(service.frequencies);
+    const entries = Object.keys(service.frequencies);
 
-    if (!frequencyNames.length) {
+    if (!entries.length) {
       frequencyWrap.hidden = true;
       return;
     }
 
-    frequencyNames.forEach((frequencyName) => {
+    entries.forEach((frequency, index) => {
       const label = document.createElement('label');
       label.className = 'calc-radio';
 
-      const isChecked = selectedFrequency === frequencyName ? 'checked' : '';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'calc-frequency';
+      input.value = frequency;
+      input.checked = index === 0;
 
-      label.innerHTML = `
-        <input type="radio" name="calc-frequency" value="${frequencyName}" ${isChecked}>
-        <span>${frequencyName}</span>
-      `;
+      const span = document.createElement('span');
+      span.textContent = frequency;
 
+      label.appendChild(input);
+      label.appendChild(span);
       frequencyList.appendChild(label);
     });
 
     frequencyWrap.hidden = false;
   }
 
+  function renderSupplements(serviceName) {
+    if (!supplementsWrap || !supplementsList) return;
+
+    const service = getServiceData(serviceName);
+    supplementsList.innerHTML = '';
+
+    if (!service || !service.supplements || !service.supplements.length) {
+      supplementsWrap.hidden = true;
+      return;
+    }
+
+    service.supplements.forEach((supplement) => {
+      const label = document.createElement('label');
+      label.className = 'calc-checkbox';
+
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'calc-supplement';
+      input.dataset.name = supplement.name;
+      input.dataset.price = String(supplement.price || 0);
+
+      const span = document.createElement('span');
+      span.textContent = `${supplement.name} (+${supplement.price} kr)`;
+
+      label.appendChild(input);
+      label.appendChild(span);
+      supplementsList.appendChild(label);
+    });
+
+    supplementsWrap.hidden = false;
+  }
+
+  function renderBookingSection(serviceName) {
+    if (!bookingWrap) return;
+
+    const bookingMode = isBookingService(serviceName);
+    bookingWrap.hidden = !bookingMode;
+
+    if (!bookingMode) {
+      resetBookingState({ clearDate: true });
+    }
+  }
+
+  function getCurrentPrice() {
+    const serviceName = serviceEl.value;
+    const sqm = Number(sqmEl.value);
+    const service = getServiceData(serviceName);
+
+    if (!serviceName || !service || !sqm || sqm <= 0) {
+      return null;
+    }
+
+    if (service.type === 'frequency') {
+      const selectedFrequency = getSelectedFrequency();
+
+      if (!selectedFrequency || !service.frequencies?.[selectedFrequency]) {
+        return null;
+      }
+
+      return getPriceFromRanges(service.frequencies[selectedFrequency], sqm);
+    }
+
+    return getPriceFromRanges(service.ranges, sqm);
+  }
+
+  function buildCalculatorSummary() {
+    const serviceName = serviceEl.value || '-';
+    const sqm = sqmEl.value ? `${sqmEl.value} m²` : '-';
+    const frequency = getSelectedFrequency();
+    const supplements = getSelectedSupplementItems();
+    const supplementsText = supplements.length
+      ? supplements.map((item) => item.name).join(', ')
+      : 'Inga tillägg';
+
+    const priceText = totalEl ? totalEl.textContent : '- kr';
+
+    const lines = [
+      'Prisberäknare:',
+      `Tjänst: ${serviceName}`,
+      `Kvadratmeter: ${sqm}`,
+    ];
+
+    if (frequency) {
+      lines.push(`Frekvens: ${frequency}`);
+    }
+
+    lines.push(`Tillägg: ${supplementsText}`);
+
+    if (isBookingService(serviceName) && selectedBookingSlot) {
+      lines.push(`Bokad tid: ${selectedBookingSlot.date} ${selectedBookingSlot.time_from}-${selectedBookingSlot.time_to}`);
+    }
+
+    lines.push(`Pris: ${priceText}`);
+
+    return lines.join('\n');
+  }
+
+  function syncSummary() {
+    const serviceName = serviceEl.value;
+    const sqm = sqmEl.value;
+    const frequency = getSelectedFrequency();
+    const supplements = getSelectedSupplementItems().map((item) => item.name);
+
+    if (summaryService) {
+      summaryService.textContent = serviceName || '-';
+    }
+
+    if (summarySqm) {
+      summarySqm.textContent = sqm ? `${sqm} m²` : '-';
+    }
+
+    if (summaryFrequencyRow) {
+      summaryFrequencyRow.hidden = !frequency;
+    }
+
+    if (summaryFrequency) {
+      summaryFrequency.textContent = frequency || '-';
+    }
+
+    if (summarySupplements) {
+      summarySupplements.textContent = supplements.length ? supplements.join(', ') : 'Inga tillägg';
+    }
+
+    if (summarySlotRow) {
+      summarySlotRow.hidden = !selectedBookingSlot;
+    }
+
+    if (summarySlot) {
+      summarySlot.textContent = selectedBookingSlot
+        ? `${selectedBookingSlot.date} ${selectedBookingSlot.time_from}-${selectedBookingSlot.time_to}`
+        : '-';
+    }
+  }
+
+  function updateApplyButtonState(totalPrice) {
+    const serviceName = serviceEl.value;
+    const sqm = Number(sqmEl.value);
+
+    if (!serviceName || !sqm || sqm <= 0 || !totalPrice) {
+      applyBtn.disabled = true;
+      return;
+    }
+
+    if (isBookingService(serviceName) && !selectedBookingSlot) {
+      applyBtn.disabled = true;
+      return;
+    }
+
+    applyBtn.disabled = false;
+  }
+
+  function updateCalculator() {
+    const serviceName = serviceEl.value;
+    const totalBase = getCurrentPrice();
+    const supplementsTotal = getSupplementsTotal();
+
+    syncSummary();
+
+    if (!serviceName) {
+      totalEl.textContent = '- kr';
+      messageEl.textContent = 'Välj en tjänst för att börja.';
+      updateApplyButtonState(null);
+      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+      return;
+    }
+
+    if (!sqmEl.value || Number(sqmEl.value) <= 0) {
+      totalEl.textContent = '- kr';
+      messageEl.textContent = 'Ange kvadratmeter för att se pris.';
+      updateApplyButtonState(null);
+      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+      return;
+    }
+
+    if (totalBase === null) {
+      totalEl.textContent = '- kr';
+      messageEl.textContent = 'Vi kunde inte hitta ett pris för den valda storleken.';
+      updateApplyButtonState(null);
+      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+      return;
+    }
+
+    const total = totalBase + supplementsTotal;
+    totalEl.textContent = `${total} kr`;
+
+    if (isBookingService(serviceName) && !selectedBookingSlot) {
+      messageEl.textContent = 'Välj datum och därefter en ledig tid för att fortsätta.';
+    } else {
+      messageEl.textContent = 'Priset är klart. Du kan nu använda uppgifterna i bokningsformuläret.';
+    }
+
+    updateApplyButtonState(total);
+
+    if (calculatorSummaryInput) {
+      calculatorSummaryInput.value = buildCalculatorSummary();
+    }
+  }
+
   async function loadAvailableBookingSlots(date) {
     if (!bookingStatusEl || !bookingSlotsEl) return;
 
-    resetBookingState();
+    const serviceName = serviceEl.value;
 
-    bookingStatusEl.textContent = 'Laddar lediga tider...';
+    if (!isBookingService(serviceName) || !date) {
+      resetBookingState();
+      updateCalculator();
+      return;
+    }
+
+    resetBookingState();
+    bookingStatusEl.textContent = 'Hämtar lediga tider...';
 
     try {
       const response = await fetch(
-        `/booking-slots/available?service=${encodeURIComponent(bookingServiceSlug)}&date=${encodeURIComponent(date)}`,
+        `/booking-slots/available?service=${encodeURIComponent(slugify(serviceName))}&date=${encodeURIComponent(date)}`,
         {
           headers: {
             Accept: 'application/json',
@@ -401,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!slots.length) {
         bookingStatusEl.textContent = 'Inga lediga tider för vald dag.';
+        updateCalculator();
         return;
       }
 
@@ -428,10 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (bookingTimeFromInput) bookingTimeFromInput.value = slot.time_from || '';
           if (bookingTimeToInput) bookingTimeToInput.value = slot.time_to || '';
 
-          if (applyBtn) {
-            applyBtn.disabled = false;
-          }
-
+          bookingStatusEl.textContent = `Vald tid: ${slot.label}`;
           updateCalculator();
         });
 
@@ -439,374 +608,175 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (error) {
       bookingStatusEl.textContent = error.message || 'Kunde inte hämta lediga tider.';
+      updateCalculator();
     }
   }
 
-  function renderSupplements(serviceName) {
-    if (!supplementsList || !supplementsWrap) return;
+  function resetCalculatorForm() {
+    serviceEl.value = '';
+    sqmEl.value = '';
 
-    const service = calcData.services[serviceName];
-    const selectedSupplements = new Set(
-      [...document.querySelectorAll('.calc-supplement:checked')].map((el) => el.dataset.name)
-    );
+    if (frequencyList) {
+      frequencyList.innerHTML = '';
+    }
 
-    supplementsList.innerHTML = '';
+    if (supplementsList) {
+      supplementsList.innerHTML = '';
+    }
 
-    if (!service || !service.supplements || !service.supplements.length) {
+    if (frequencyWrap) {
+      frequencyWrap.hidden = true;
+    }
+
+    if (supplementsWrap) {
       supplementsWrap.hidden = true;
-      return;
     }
 
-    service.supplements.forEach((supplement) => {
-      const label = document.createElement('label');
-      label.className = 'calc-checkbox';
-
-      const isChecked = selectedSupplements.has(supplement.name) ? 'checked' : '';
-
-      label.innerHTML = `
-        <input
-          type="checkbox"
-          class="calc-supplement"
-          data-price="${supplement.price}"
-          data-name="${supplement.name}"
-          ${isChecked}
-        >
-        <span>${supplement.name}</span>
-      `;
-
-      supplementsList.appendChild(label);
-    });
-
-    supplementsWrap.hidden = false;
-  }
-
-  function updateCalculator() {
-    if (!serviceEl || !sqmEl || !totalEl) return;
-
-    const serviceName = serviceEl.value;
-    const sqm = Number(sqmEl.value || 0);
-    const service = calcData.services[serviceName];
-
-    if (summaryService) summaryService.textContent = serviceName || '-';
-    if (summarySqm) summarySqm.textContent = sqm > 0 ? `${sqm} m²` : '-';
-    if (summaryFrequency) summaryFrequency.textContent = '-';
-    if (summarySupplements) summarySupplements.textContent = '-';
-    if (summaryFrequencyRow) summaryFrequencyRow.hidden = true;
-    if (messageEl) messageEl.textContent = '';
-    if (applyBtn) applyBtn.disabled = true;
-
-    if (!serviceName) {
-      totalEl.textContent = '- kr';
-
-      if (frequencyWrap) frequencyWrap.hidden = true;
-      if (supplementsWrap) supplementsWrap.hidden = true;
-      if (bookingWrap) bookingWrap.hidden = true;
-      if (frequencyList) frequencyList.innerHTML = '';
-
-      resetBookingState({ clearDate: true });
-      toggleBookingCustomerFields('');
-
-      return;
+    if (bookingWrap) {
+      bookingWrap.hidden = true;
     }
-
-    renderFrequencies(serviceName);
-    renderSupplements(serviceName);
-
-    if (isBookingService(serviceName)) {
-      if (frequencyWrap) frequencyWrap.hidden = true;
-      if (bookingWrap) bookingWrap.hidden = false;
-
-      totalEl.textContent = 'Pris enligt offert';
-
-      if (selectedBookingSlot) {
-        if (messageEl) {
-          messageEl.textContent = `Vald tid: ${selectedBookingSlot.date} ${selectedBookingSlot.label}`;
-        }
-
-        if (applyBtn) {
-          applyBtn.disabled = false;
-        }
-      } else {
-        if (messageEl) {
-          messageEl.textContent = 'Välj datum och därefter en ledig tid.';
-        }
-
-        if (applyBtn) {
-          applyBtn.disabled = true;
-        }
-      }
-
-      toggleBookingCustomerFields(serviceName);
-      return;
-    }
-
-    if (bookingWrap) bookingWrap.hidden = true;
 
     resetBookingState({ clearDate: true });
-    toggleBookingCustomerFields('');
 
-    let basePrice = null;
-    let frequencyText = '';
+    if (summaryService) summaryService.textContent = '-';
+    if (summarySqm) summarySqm.textContent = '-';
+    if (summaryFrequency) summaryFrequency.textContent = '-';
+    if (summarySupplements) summarySupplements.textContent = 'Inga tillägg';
+    if (summaryFrequencyRow) summaryFrequencyRow.hidden = true;
+    if (summarySlotRow) summarySlotRow.hidden = true;
 
-    if (service.type === 'frequency') {
-      frequencyText = getSelectedFrequency();
+    totalEl.textContent = '- kr';
+    messageEl.textContent = 'Välj en tjänst för att börja.';
+    applyBtn.disabled = true;
 
-      if (summaryFrequencyRow) summaryFrequencyRow.hidden = false;
-      if (summaryFrequency) summaryFrequency.textContent = frequencyText || '-';
-
-      if (!frequencyText) {
-        totalEl.textContent = '- kr';
-        if (messageEl) messageEl.textContent = 'Välj hur ofta tjänsten ska utföras.';
-        return;
-      }
-
-      if (sqm <= 0) {
-        totalEl.textContent = '- kr';
-        if (messageEl) messageEl.textContent = 'Ange antal kvadratmeter.';
-        return;
-      }
-
-      basePrice = getPriceFromRanges(service.frequencies[frequencyText], sqm);
-    } else {
-      if (frequencyWrap) frequencyWrap.hidden = true;
-
-      if (sqm <= 0) {
-        totalEl.textContent = '- kr';
-        if (messageEl) messageEl.textContent = 'Ange antal kvadratmeter.';
-        return;
-      }
-
-      basePrice = getPriceFromRanges(service.ranges, sqm);
-    }
-
-    if (basePrice === null) {
-      totalEl.textContent = '- kr';
-      if (messageEl) messageEl.textContent = 'Kontakta oss för personlig offert för denna storlek.';
-      return;
-    }
-
-    const checkedSupplements = [...document.querySelectorAll('.calc-supplement:checked')];
-    const supplementsTotal = checkedSupplements.reduce((sum, el) => sum + Number(el.dataset.price || 0), 0);
-    const supplementsNames = checkedSupplements.map((el) => el.dataset.name);
-
-    const total = basePrice + supplementsTotal;
-
-    totalEl.textContent = `${formatPrice(total)} kr`;
-
-    if (summarySupplements) {
-      summarySupplements.textContent = supplementsNames.length ? supplementsNames.join(', ') : '-';
-    }
-
-    if (applyBtn) {
-      applyBtn.disabled = false;
+    if (calculatorSummaryInput) {
+      calculatorSummaryInput.value = '';
     }
   }
 
-  if (serviceEl) {
-    serviceEl.addEventListener('change', updateCalculator);
-  }
+  serviceEl.addEventListener('change', () => {
+    const serviceName = serviceEl.value;
 
-  if (sqmEl) {
-    sqmEl.addEventListener('input', updateCalculator);
-  }
+    renderFrequencyOptions(serviceName);
+    renderSupplements(serviceName);
+    renderBookingSection(serviceName);
+    toggleBookingCustomerFields(formServiceEl ? formServiceEl.value : '');
 
-  bookingPersonnummerInput?.addEventListener('input', () => {
-    clearPersonnummerValidity();
-
-    const cursorAtEnd =
-      bookingPersonnummerInput.selectionStart === bookingPersonnummerInput.value.length;
-
-    const formatted = formatPersonnummerForDisplay(bookingPersonnummerInput.value);
-
-    bookingPersonnummerInput.value = formatted;
-
-    if (cursorAtEnd) {
-      const pos = bookingPersonnummerInput.value.length;
-      bookingPersonnummerInput.setSelectionRange(pos, pos);
-    }
-  });
-
-  bookingPersonnummerInput?.addEventListener('blur', () => {
-    clearPersonnummerValidity();
-
-    const value = bookingPersonnummerInput.value;
-
-    if (!value) {
-      return;
-    }
-
-    if (!isValidSwedishPersonnummer(value)) {
-      showPersonnummerValidity('Ange ett giltigt personnummer i format YYYYMMDD-XXXX eller YYMMDD-XXXX.');
-    }
-  });
-
-  bookingServiceSelect?.addEventListener('change', () => {
-    toggleBookingCustomerFields(bookingServiceSelect.value || '');
-  });
-
-  bookingDateEl?.addEventListener('change', async () => {
-    const serviceName = serviceEl?.value || '';
-    const date = bookingDateEl.value;
-
-    if (!isBookingService(serviceName)) {
-      return;
-    }
-
-    if (!date) {
-      resetBookingState();
-      updateCalculator();
-      return;
-    }
-
-    await loadAvailableBookingSlots(date);
     updateCalculator();
   });
 
-  document.addEventListener('change', (event) => {
-    if (event.target.matches('input[name="calc-frequency"], .calc-supplement')) {
-      updateCalculator();
+  sqmEl.addEventListener('input', updateCalculator);
+
+  if (frequencyList) {
+    frequencyList.addEventListener('change', updateCalculator);
+  }
+
+  if (supplementsList) {
+    supplementsList.addEventListener('change', updateCalculator);
+  }
+
+  if (bookingDateEl) {
+    bookingDateEl.addEventListener('change', () => {
+      const selectedDate = bookingDateEl.value;
+      loadAvailableBookingSlots(selectedDate);
+    });
+  }
+
+  if (formServiceEl) {
+    formServiceEl.addEventListener('change', () => {
+      toggleBookingCustomerFields(formServiceEl.value);
+    });
+  }
+
+  applyBtn.addEventListener('click', () => {
+    const serviceName = serviceEl.value;
+    const sqm = Number(sqmEl.value);
+    const totalPrice = getCurrentPrice();
+
+    if (!serviceName || !sqm || sqm <= 0 || totalPrice === null) {
+      messageEl.textContent = 'Fyll i tjänst och kvadratmeter först.';
+      return;
+    }
+
+    if (isBookingService(serviceName) && !selectedBookingSlot) {
+      messageEl.textContent = 'Välj datum och ledig tid innan du går vidare.';
+      return;
+    }
+
+    if (formServiceEl) {
+      formServiceEl.value = serviceName;
+      toggleBookingCustomerFields(serviceName);
+    }
+
+    if (calculatorSummaryInput) {
+      calculatorSummaryInput.value = buildCalculatorSummary();
+    }
+
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 
-  if (applyBtn) {
-    applyBtn.addEventListener('click', () => {
-      const serviceName = serviceEl?.value || '';
-      const sqm = sqmEl?.value || '';
-      const frequency = getSelectedFrequency();
-      const total = totalEl?.textContent || '- kr';
-      const supplements = [...document.querySelectorAll('.calc-supplement:checked')].map((el) => el.dataset.name);
-
-      const bookingService = document.querySelector('#booking-form select[name="service"]');
-      const bookingCalculatorSummary = document.querySelector('#booking-form input[name="calculator_summary"]');
-
-      if (!serviceName) {
-        return;
-      }
-
-      if (bookingService) {
-        bookingService.value = serviceName;
-      }
-
-      if (isBookingService(serviceName)) {
-        if (!selectedBookingSlot) {
-          if (messageEl) {
-            messageEl.textContent = 'Välj först en ledig tid.';
-          }
-
-          return;
-        }
-
-        if (bookingSlotIdInput) bookingSlotIdInput.value = selectedBookingSlot.id || '';
-        if (bookingDateInput) bookingDateInput.value = selectedBookingSlot.date || '';
-        if (bookingTimeFromInput) bookingTimeFromInput.value = selectedBookingSlot.time_from || '';
-        if (bookingTimeToInput) bookingTimeToInput.value = selectedBookingSlot.time_to || '';
-      } else {
-        if (bookingSlotIdInput) bookingSlotIdInput.value = '';
-        if (bookingDateInput) bookingDateInput.value = '';
-        if (bookingTimeFromInput) bookingTimeFromInput.value = '';
-        if (bookingTimeToInput) bookingTimeToInput.value = '';
-      }
-
-      if (bookingCalculatorSummary) {
-        const lines = [
-          'Prisberäknare:',
-          `Tjänst: ${serviceName || '-'}`,
-          `Kvadratmeter: ${sqm ? `${sqm} m²` : '-'}`,
-          `Hur ofta: ${frequency || '-'}`,
-          `Datum: ${selectedBookingSlot?.date || '-'}`,
-          `Tid: ${selectedBookingSlot?.label || '-'}`,
-          `Tillägg: ${supplements.length ? supplements.join(', ') : '-'}`,
-          `Beräknat pris: ${total}`,
-        ];
-
-        bookingCalculatorSummary.value = lines.join('\n');
-      }
-
-      toggleBookingCustomerFields(serviceName);
-
-      const contactSection = document.getElementById('contact');
-
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      setTimeout(() => {
-        if (isBookingService(serviceName)) {
-          bookingPersonnummerInput?.focus();
-        } else {
-          const nameField = document.querySelector('#booking-form input[name="name"]');
-          nameField?.focus();
-        }
-      }, 350);
-    });
-  }
+  resetCalculatorForm();
 
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-
-      clearPersonnummerValidity();
       setStatus('', '');
 
-      const selectedService = form.querySelector('select[name="service"]')?.value || '';
+      const formData = new FormData(form);
+      const selectedService = String(formData.get('service') || '').trim();
+
+      if (calculatorSummaryInput && calculatorSummaryInput.value) {
+        formData.set('calculator_summary', calculatorSummaryInput.value);
+      }
 
       if (isBookingService(selectedService)) {
-        const rawPersonnummer = bookingPersonnummerInput?.value || '';
-        const normalizedPersonnummer = normalizePersonnummerValue(rawPersonnummer);
-
-        if (bookingPersonnummerInput) {
-          bookingPersonnummerInput.value = normalizedPersonnummer;
-        }
-
-        if (!bookingSlotIdInput?.value) {
-          setStatus('Välj först datum och en ledig tid i kalkylatorn.', 'is-error');
+        if (!String(formData.get('booking_slot_id') || '').trim()) {
+          setStatus('Välj först en ledig tid i prisberäknaren.', 'is-error');
           return;
         }
 
-        if (!normalizedPersonnummer) {
-          const message = 'Personnummer är obligatoriskt för RUT-avdrag.';
-          setStatus(message, 'is-error');
-          showPersonnummerValidity(message);
-          bookingPersonnummerInput?.focus();
+        if (!String(formData.get('personnummer') || '').trim()) {
+          setStatus('Fyll i personnummer för att fortsätta bokningen.', 'is-error');
           return;
         }
 
-        if (!isValidSwedishPersonnummer(normalizedPersonnummer)) {
-          const message = 'Ange ett giltigt personnummer i format YYYYMMDDXXXX eller YYMMDDXXXX.';
-          setStatus(message, 'is-error');
-          showPersonnummerValidity(message);
-          bookingPersonnummerInput?.focus();
+        if (!String(formData.get('address') || '').trim()) {
+          setStatus('Fyll i adress för att fortsätta bokningen.', 'is-error');
           return;
         }
       }
-
-      if (!form.reportValidity()) {
-        setStatus('Kontrollera formuläret och fyll i alla obligatoriska fält korrekt.', 'is-error');
-        return;
-      }
-
-      const formData = new FormData(form);
 
       try {
+        const wasBookingService = isBookingService(selectedService);
+
         await submitToServer(formData);
 
         form.reset();
-        resetBookingState({ clearDate: true });
         toggleBookingCustomerFields('');
 
-        if (bookingWrap) {
-          bookingWrap.hidden = true;
+        if (formServiceEl) {
+          formServiceEl.value = '';
         }
 
-        updateCalculator();
+        resetCalculatorForm();
 
-        setStatus('Tack! Din förfrågan har skickats. Vi återkommer så snart som möjligt.', 'is-success');
+        if (wasBookingService) {
+          setStatus(
+            'Tack! Din bokningsförfrågan har skickats. Vi bekräftar tiden så snart som möjligt.',
+            'is-success'
+          );
+        } else {
+          setStatus(
+            'Tack! Din förfrågan har skickats. Vi återkommer så snart som möjligt.',
+            'is-success'
+          );
+        }
       } catch (error) {
         setStatus(error.message || 'Kunde inte skicka formuläret till servern.', 'is-error');
       }
     });
   }
-
-  toggleBookingCustomerFields(bookingServiceSelect?.value || '');
-  updateCalculator();
-});
+})();

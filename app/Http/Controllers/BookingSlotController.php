@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
-use Carbon\Carbon;
+use App\Models\BookingSlot;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,51 +11,37 @@ class BookingSlotController extends Controller
     public function available(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'service' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date', 'after_or_equal:today'],
-            'duration' => ['nullable', 'integer', 'min:30', 'max:480'],
         ]);
 
-        $duration = (int) ($validated['duration'] ?? 120);
-        $date = $validated['date'];
-
-        $slotStarts = [
-            '08:00', '09:00', '10:00', '11:00', '12:00',
-            '13:00', '14:00', '15:00', '16:00', '17:00',
-        ];
-
-        $bookedRanges = Booking::query()
-            ->whereDate('booking_date', $date)
-            ->whereNotIn('status', ['cancelled'])
-            ->get(['time_from', 'time_to'])
-            ->map(function ($booking) {
-                return [
-                    'from' => Carbon::createFromFormat('H:i:s', $booking->time_from),
-                    'to' => Carbon::createFromFormat('H:i:s', $booking->time_to),
-                ];
-            });
-
-        $available = collect($slotStarts)
-            ->map(function (string $start) use ($duration, $bookedRanges) {
-                $from = Carbon::createFromFormat('H:i', $start);
-                $to = (clone $from)->addMinutes($duration);
-
-                $isBusy = $bookedRanges->contains(function (array $range) use ($from, $to) {
-                    return $from->lt($range['to']) && $to->gt($range['from']);
-                });
+        $slots = BookingSlot::query()
+            ->with('service:id,slug')
+            ->whereDate('booking_date', $validated['date'])
+            ->where('is_active', true)
+            ->where('is_booked', false)
+            ->whereHas('service', function ($query) use ($validated) {
+                $query->where('slug', $validated['service']);
+            })
+            ->orderBy('time_from')
+            ->get()
+            ->map(function (BookingSlot $slot) {
+                $timeFrom = substr((string) $slot->time_from, 0, 5);
+                $timeTo = substr((string) $slot->time_to, 0, 5);
 
                 return [
-                    'time' => $from->format('H:i'),
-                    'end_time' => $to->format('H:i'),
-                    'available' => ! $isBusy,
+                    'id' => $slot->id,
+                    'date' => optional($slot->booking_date)->format('Y-m-d'),
+                    'time_from' => $timeFrom,
+                    'time_to' => $timeTo,
+                    'label' => $timeFrom . ' - ' . $timeTo,
                 ];
             })
-            ->values()
-            ->all();
+            ->values();
 
         return response()->json([
-            'date' => $date,
-            'duration' => $duration,
-            'slots' => $available,
+            'ok' => true,
+            'slots' => $slots,
         ]);
     }
 }

@@ -467,85 +467,86 @@
         </div>
 
         <form class="booking-form" id="booking-form" method="POST" action="{{ route('contact.store') }}" novalidate>
-          @csrf
+  @csrf
 
-          <div class="form-row">
-            <label>
-              För & Efternamn
-              <input type="text" name="name" autocomplete="name" required />
-            </label>
-            <label>
-              E-post
-              <input type="email" name="email" autocomplete="email" required />
-            </label>
-          </div>
+  <input type="hidden" name="calculator_summary" id="calculator-summary-input">
+  <input type="hidden" name="booking_slot_id" id="booking-slot-id-input">
+  <input type="hidden" name="booking_date" id="booking-date-input">
+  <input type="hidden" name="booking_time_from" id="booking-time-from-input">
+  <input type="hidden" name="booking_time_to" id="booking-time-to-input">
 
-          <div class="form-row">
-            <label>
-              Telefonnummer
-              <input type="tel" name="phone" autocomplete="tel" required />
-            </label>
-            <label>
-  Tjänst
-  <select name="service" required>
-    <option value="">Välj tjänst</option>
-
-    @forelse($services as $service)
-      <option value="{{ $service->name }}" {{ old('service') === $service->name ? 'selected' : '' }}>
-        {{ $service->name }}
-      </option>
-    @empty
-      <option>Hemstädning</option>
-      <option>Flyttstädning</option>
-      <option>Storstädning</option>
-      <option>Fönsterputsning</option>
-      <option>Byggstädning</option>
-      <option>Flytthjälp</option>
-    @endforelse
-  </select>
-</label>
-          </div>
-<input type="hidden" name="calculator_summary" id="calculator-summary-input" value="">
-          <label>
-            <input type="hidden" name="booking_slot_id" id="booking-slot-id-input" value="">
-<input type="hidden" name="booking_date" id="booking-date-input" value="">
-<input type="hidden" name="booking_time_from" id="booking-time-from-input" value="">
-<input type="hidden" name="booking_time_to" id="booking-time-to-input" value="">
-
-<div id="booking-customer-fields" hidden>
-  <div class="form-grid">
+  <div class="form-row">
     <label>
-      Personnummer
-      <input
-  type="text"
-  name="personnummer"
-  id="booking-personnummer"
-  placeholder="YYYYMMDD-XXXX"
-  inputmode="numeric"
-  maxlength="13"
-  autocomplete="off"
->
+      Namn
+      <input type="text" name="name" autocomplete="name" required />
     </label>
 
     <label>
-      Adress
-      <input
-        type="text"
-        name="address"
-        id="booking-address"
-        placeholder="Gatuadress"
-        autocomplete="street-address"
-      >
+      E-post
+      <input type="email" name="email" autocomplete="email" required />
     </label>
   </div>
-</div>
-            Meddelande
-            <textarea name="message" rows="5" placeholder="Beskriv bostad, önskat datum eller vad du behöver hjälp med."></textarea>
-          </label>
 
-          <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
-          <p class="form-status" id="form-status" aria-live="polite"></p>
-        </form>
+  <div class="form-row">
+    <label>
+      Telefon
+      <input type="tel" name="phone" autocomplete="tel" required />
+    </label>
+
+    <label>
+      Tjänst
+      <select name="service" id="contact-service" required>
+        <option value="">Välj tjänst</option>
+        @foreach($services as $service)
+          <option value="{{ $service->name }}">{{ $service->name }}</option>
+        @endforeach
+      </select>
+    </label>
+  </div>
+
+  <div id="booking-customer-fields" hidden>
+    <div class="form-row">
+      <label>
+        Personnummer
+        <input
+          type="text"
+          name="personnummer"
+          id="booking-personnummer"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="YYYYMMDDXXXX eller YYMMDDXXXX"
+        />
+      </label>
+
+      <label>
+        Adress
+        <input
+          type="text"
+          name="address"
+          id="booking-address"
+          autocomplete="street-address"
+          placeholder="Gatuadress och lägenhetsnummer"
+        />
+      </label>
+    </div>
+
+    <p class="form-note">
+      För bokning med RUT-avdrag behöver vi personnummer och adress.
+    </p>
+  </div>
+
+  <label>
+    Meddelande
+    <textarea
+      name="message"
+      rows="5"
+      placeholder="Beskriv bostad, önskat datum eller vad du behöver hjälp med."
+    ></textarea>
+  </label>
+
+  <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
+  <p class="form-status" id="form-status" aria-live="polite"></p>
+</form>
       </div>
     </section>
 

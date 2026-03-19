@@ -1,49 +1,3 @@
-@php
-    $calculatorServices = $services->filter(function ($service) {
-        if ($service->slug === 'engangsstadning') {
-            return true;
-        }
-
-        if ($service->pricing_mode === 'frequency') {
-            return $service->frequencies->contains(function ($frequency) {
-                return $frequency->priceRanges->isNotEmpty();
-            });
-        }
-
-        return $service->priceRanges->isNotEmpty();
-    })->values();
-@endphp
-
-<script>
-window.calcData = {
-    services: {
-        @foreach($calculatorServices as $service)
-        "{{ $service->name }}": {
-            slug: "{{ $service->slug }}",
-            type: "{{ $service->pricing_mode }}", // 'range' или 'frequency'
-            @if($service->pricing_mode === 'frequency')
-                {{-- Если цена зависит от частоты, собираем диапазоны для каждой частоты --}}
-                frequencies: {
-                    @foreach($service->frequencies as $freq)
-                    "{{ $freq->name }}": "{{ $freq->priceRanges->map(fn($r) => $r->min_sqm.'-'.($r->max_sqm?? 999).': '.$r->price)->join('|') }}",
-                    @endforeach
-                },
-            @else
-                {{-- Если цена обычная (по диапазонам), собираем строку диапазонов --}}
-                ranges: "{{ $service->priceRanges->map(fn($r) => $r->min_sqm.'-'.($r->max_sqm?? 999).': '.$r->price)->join('|') }}",
-            @endif
-            {{-- Список доп. услуг --}}
-            supplements: [
-                @foreach($service->addons as $addon)
-                { name: "{{ $addon->name }}", price: {{ $addon->price }} },
-                @endforeach
-            ]
-        },
-        @endforeach
-    }
-};
-</script>
-
 <section id="calculator" class="price-calculator section section-soft">
   <div class="container">
     <div class="section-head">
@@ -65,15 +19,9 @@ window.calcData = {
               <label for="calc-service">Typ av tjänst</label>
               <select id="calc-service" class="calc-input">
                 <option value="">Välj tjänst</option>
-
-                @forelse($calculatorServices as $service)
+                @foreach($services as $service)
                   <option value="{{ $service->name }}">{{ $service->name }}</option>
-                @empty
-                  <option value="Hemstädning">Hemstädning</option>
-                  <option value="Storstädning">Storstädning</option>
-                  <option value="Flyttstädning">Flyttstädning</option>
-                  <option value="Visningsstädning">Visningsstädning</option>
-                @endforelse
+                @endforeach
               </select>
             </div>
 
@@ -87,35 +35,33 @@ window.calcData = {
           </div>
 
           <div id="calc-frequency-wrap" class="calc-box" hidden>
-  <h4>Hur ofta</h4>
-  <div id="calc-frequency-list" class="calc-radio-list"></div>
-</div>
+            <h4>Hur ofta</h4>
+            <div id="calc-frequency-list" class="calc-radio-list"></div>
+          </div>
 
           <div id="calc-supplements-wrap" class="calc-box" hidden>
             <h4>Alternativa tillägg</h4>
             <div id="calc-supplements-list" class="calc-checkbox-list"></div>
           </div>
+
+          <div id="calc-booking-wrap" class="calc-box" hidden>
+            <h4>Välj datum och tid</h4>
+            <p>För Engångsstädning väljer du först datum och därefter en ledig tid.</p>
+
+            <div class="calc-field">
+              <label for="calc-booking-date">Datum</label>
+              <input
+                id="calc-booking-date"
+                class="calc-input"
+                type="date"
+                min="{{ now()->format('Y-m-d') }}"
+              >
+            </div>
+
+            <p id="calc-booking-status" class="calc-message" aria-live="polite"></p>
+            <div id="calc-booking-slots"></div>
+          </div>
         </div>
-
-<div id="calc-booking-wrap" class="calc-box" hidden>
-  <h4>Välj datum och tid</h4>
-
-  <div class="calc-field">
-    <label for="calc-booking-date">Datum</label>
-    <div class="calc-input-wrap">
-      <input
-        id="calc-booking-date"
-        class="calc-input"
-        type="date"
-        min="{{ now()->format('Y-m-d') }}"
-      >
-    </div>
-  </div>
-
-  <p id="calc-booking-status" class="calc-message"></p>
-
-  <div id="calc-booking-slots" class="calc-radio-list"></div>
-</div>
 
         <aside class="calc-summary-card">
           <h3>Sammanfattning</h3>
@@ -138,6 +84,11 @@ window.calcData = {
           <div class="calc-summary-row">
             <span>Tillägg</span>
             <strong id="calc-summary-supplements">-</strong>
+          </div>
+
+          <div class="calc-summary-row" id="calc-summary-slot-row" hidden>
+            <span>Bokad tid</span>
+            <strong id="calc-summary-slot">-</strong>
           </div>
 
           <div class="calc-total-box">
