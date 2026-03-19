@@ -13,7 +13,7 @@
             ]))),
         ])));
 
-        $groupLabel = ($page['group'] ?? null) === 'company' ? 'Företag' : 'Städning för hemmet';
+        $groupLabel = ($page['group'] ?? null) === 'company' ? 'Företag' : 'Städning';
         $ctaPrimaryHref = route('home') . '#contact';
         $ctaPrimaryText = 'Begär offert';
 
@@ -74,7 +74,7 @@
     </header>
 
     <main id="main">
-        <section class="service-hero section">
+        <section class="service-page-hero section">
             <div class="container">
                 <div class="service-breadcrumbs">
                     <a href="{{ route('home') }}">Start</a>
@@ -84,13 +84,13 @@
                     <span>{{ $page['title'] }}</span>
                 </div>
 
-                <div class="service-hero-grid">
-                    <div class="service-hero-copy">
+                <div class="service-page-hero__box">
+                    <div class="service-page-hero__content">
                         <span class="eyebrow">{{ $page['eyebrow'] }}</span>
                         <h1>{{ $page['title'] }}</h1>
                         <p class="lead">{{ $page['lead'] }}</p>
 
-                        <div class="service-hero-actions">
+                        <div class="hero-actions">
                             <a href="{{ $ctaPrimaryHref }}" class="btn btn-primary">{{ $ctaPrimaryText }}</a>
                             <a href="{{ route('home') }}#contact" class="btn btn-secondary">Kontakta oss</a>
                         </div>
@@ -102,85 +102,79 @@
                         </div>
                     </div>
 
-                    <aside class="service-hero-card">
-                        <h3>Snabb överblick</h3>
-
+                    <div class="service-page-hero__info">
                         <div class="service-summary-list">
                             <div class="service-summary-row">
                                 <span>Tjänst</span>
                                 <strong>{{ $page['title'] }}</strong>
                             </div>
-
                             <div class="service-summary-row">
                                 <span>Målgrupp</span>
                                 <strong>{{ ($page['group'] ?? null) === 'company' ? 'Företag' : 'Privatpersoner' }}</strong>
                             </div>
-
                             <div class="service-summary-row">
                                 <span>Område</span>
                                 <strong>Stockholm</strong>
                             </div>
-
                             <div class="service-summary-row">
                                 <span>Telefon</span>
                                 <strong>{{ $phonePrimary }}</strong>
                             </div>
-
                             <div class="service-summary-row">
                                 <span>E-post</span>
                                 <strong>{{ $email }}</strong>
                             </div>
                         </div>
-                    </aside>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section class="section">
-            <div class="container service-content-grid">
-                <div class="service-main-column">
-                    <div class="service-content-card">
+            <div class="container service-page-layout">
+                <div class="service-page-main">
+                    <article class="service-page-card">
                         <h2>Om tjänsten</h2>
 
                         @foreach($page['intro'] as $paragraph)
                             <p>{{ $paragraph }}</p>
                         @endforeach
-                    </div>
+                    </article>
 
-                    <div class="service-content-card">
+                    <article class="service-page-card">
                         <h2>{{ $page['included_title'] }}</h2>
                         <ul class="check-list">
                             @foreach($page['included'] as $item)
                                 <li>{{ $item }}</li>
                             @endforeach
                         </ul>
-                    </div>
+                    </article>
 
-                    <div class="service-process-card">
+                    <article class="service-page-card">
                         <span class="eyebrow">Så går det till</span>
-                        <h2>En enkel och tydlig process</h2>
+                        <h2>En tydlig process från start till utförande</h2>
 
                         <div class="service-process-grid">
-                            <article>
+                            <div class="service-process-step">
                                 <strong>1. Kontakt</strong>
-                                <p>Du hör av dig till oss via formulär eller telefon och berättar vad du behöver hjälp med.</p>
-                            </article>
+                                <p>Du skickar en förfrågan och berättar kort vad du behöver hjälp med.</p>
+                            </div>
 
-                            <article>
-                                <strong>2. Upplägg</strong>
-                                <p>Vi föreslår ett upplägg som passar din bostad, lokal eller verksamhet och går igenom önskemål.</p>
-                            </article>
+                            <div class="service-process-step">
+                                <strong>2. Planering</strong>
+                                <p>Vi går igenom upplägg, omfattning och föreslår en lösning som passar dig eller verksamheten.</p>
+                            </div>
 
-                            <article>
+                            <div class="service-process-step">
                                 <strong>3. Utförande</strong>
-                                <p>Vi planerar tjänsten och genomför uppdraget med fokus på kvalitet, tydlighet och trygg kommunikation.</p>
-                            </article>
+                                <p>Vi genomför tjänsten med fokus på tydlighet, kvalitet och ett professionellt resultat.</p>
+                            </div>
                         </div>
-                    </div>
+                    </article>
                 </div>
 
-                <aside class="service-side-column">
-                    <div class="service-side-card">
+                <aside class="service-page-side">
+                    <div class="service-page-card service-page-card--side">
                         <h3>Därför väljer kunder denna tjänst</h3>
                         <ul class="check-list">
                             @foreach($page['highlights'] as $item)
@@ -189,7 +183,7 @@
                         </ul>
                     </div>
 
-                    <div class="service-side-card">
+                    <div class="service-page-card service-page-card--side">
                         <h3>Kontakt</h3>
 
                         <div class="service-sidebar-meta">
@@ -213,8 +207,8 @@
         </section>
 
         <section class="section section-soft">
-            <div class="container service-bottom-grid">
-                <div class="quote-box">
+            <div class="container service-page-bottom">
+                <div class="service-page-card">
                     <span class="eyebrow">Varför denna tjänst?</span>
                     <h2>{{ $page['why_title'] }}</h2>
                     <p>{{ $page['why_text'] }}</p>
@@ -225,9 +219,10 @@
                     </div>
                 </div>
 
-                <div class="service-links-panel">
+                <div class="service-page-card">
                     <h3>{{ ($page['group'] ?? null) === 'company' ? 'Fler företagstjänster' : 'Fler tjänster för hemmet' }}</h3>
-                    <ul>
+
+                    <ul class="service-links-list">
                         @foreach($relatedLinks as $item)
                             <li><a href="{{ $item['route'] }}">{{ $item['label'] }}</a></li>
                         @endforeach
@@ -238,11 +233,11 @@
 
         <section class="section">
             <div class="container">
-                <div class="service-cta-banner">
+                <div class="service-page-cta">
                     <div>
                         <span class="eyebrow">Nästa steg</span>
                         <h2>Vill du ha hjälp med {{ mb_strtolower($page['title']) }}?</h2>
-                        <p>Kontakta oss så hjälper vi dig att hitta ett upplägg som passar just dina behov.</p>
+                        <p>Kontakta oss så hjälper vi dig att hitta ett upplägg som passar dina behov.</p>
                     </div>
 
                     <div class="hero-actions">

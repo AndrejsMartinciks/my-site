@@ -17,11 +17,11 @@
     ])));
     $orgNumber = $siteSettings->org_number ?? '556988-2722';
 
-    $bankgiro = '540-1054';
-    $swish = '1234591558';
+    $bankgiro = $siteSettings->bankgiro ?? '540-1054';
+    $swish = $siteSettings->swish ?? '1234591558';
     $facebookUrl = 'https://www.facebook.com/profile.php?id=61558309301151#';
-    $instagramUrl = 'https://www.instagram.com/cleansource_ab?fbclid=IwY2xjawQo8LJleHRuA2FlbQIxMABicmlkETA4eHUzZGxBeUpiZkxBNzg3c3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHpOtXqviDqCw-KsJtrM-uqETaJcA4CwDl-_QvPLo8rSUKXChC4uCJo2eAOwU_aem_vhHTjVSzh9vhKuK3ae77RQ';
-    $recoUrl = 'https://www.reco.se/clean-source-ab#3102144';
+    $instagramUrl = 'https://www.instagram.com/cleansource_ab';
+    $recoUrl = 'https://www.reco.se/clean-source-ab';
 
     $heroEyebrow = $siteSettings->hero_eyebrow ?? 'Städning för hem & företag i Stockholm';
     $heroTitle = $siteSettings->hero_title ?? 'Trygg och noggrann städservice med tydlig bokning.';
@@ -262,58 +262,58 @@
 
   <main id="main">
     <section class="hero section">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="eyebrow">{{ $heroEyebrow }}</span>
-          <h1>{{ $heroTitle }}</h1>
-          <p class="lead">{{ $heroText }}</p>
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">{{ $heroEyebrow }}</span>
+      <h1>{{ $heroTitle }}</h1>
+      <p class="lead">{{ $heroText }}</p>
 
-          <div class="hero-actions">
-            <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
-            <a href="#contact" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
-          </div>
-
-          <ul class="hero-points" aria-label="Våra styrkor">
-            @foreach($heroPoints as $point)
-              <li>{{ $point }}</li>
-            @endforeach
-          </ul>
-        </div>
-
-        <aside class="hero-card" aria-label="Snabb info">
-          <div class="stat-grid">
-            <article>
-              <strong>{{ $services->count() }}+</strong>
-              <span>aktiva tjänster</span>
-            </article>
-            <article>
-              <strong>24h</strong>
-              <span>svarstid på vardagar</span>
-            </article>
-            <article>
-              <strong>
-                @if($priceCards->isNotEmpty())
-                  {{ $priceCards->min('price') }} kr
-                @else
-                  249 kr
-                @endif
-              </strong>
-              <span>från / timme efter RUT</span>
-            </article>
-            <article>
-              <strong>{{ max($displayTestimonials->count(), 3) }}+</strong>
-              <span>kundomdömen</span>
-            </article>
-          </div>
-
-          <div class="hero-badge-list">
-            @foreach($heroBadges as $badge)
-              <span>{{ $badge }}</span>
-            @endforeach
-          </div>
-        </aside>
+      <div class="hero-actions">
+        <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
+        <a href="#contact" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
       </div>
-    </section>
+
+      <ul class="hero-points" aria-label="Våra styrkor">
+        @foreach($heroPoints as $point)
+          <li>{{ $point }}</li>
+        @endforeach
+      </ul>
+    </div>
+
+    <aside class="hero-card" aria-label="Snabb info">
+      <div class="stat-grid">
+        <article>
+          <strong>{{ $services->count() }}+</strong>
+          <span>aktiva tjänster</span>
+        </article>
+        <article>
+          <strong>24h</strong>
+          <span>svarstid på vardagar</span>
+        </article>
+        <article>
+          <strong>
+            @if($priceCards->isNotEmpty())
+              {{ $priceCards->min('price') }} kr
+            @else
+              249 kr
+            @endif
+          </strong>
+          <span>från / timme efter RUT</span>
+        </article>
+        <article>
+          <strong>{{ max($displayTestimonials->count(), 3) }}+</strong>
+          <span>kundomdömen</span>
+        </article>
+      </div>
+
+      <div class="hero-badge-list">
+        @foreach($heroBadges as $badge)
+          <span>{{ $badge }}</span>
+        @endforeach
+      </div>
+    </aside>
+  </div>
+</section>
 
     @include('partials.calculator')
 
@@ -337,67 +337,90 @@
     </section>
 
     <section class="services section" id="services">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">Våra tjänster</span>
-          <h2>Städning för privatpersoner och företag</h2>
-          <p>Vi erbjuder flexibla upplägg för både regelbunden städning och engångsuppdrag i hela Stockholm.</p>
-        </div>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Våra tjänster</span>
+      <h2>Städning för privatpersoner och företag</h2>
+      <p>
+        Vi erbjuder professionella städtjänster i Stockholm med tydliga upplägg,
+        flexibel planering och snabb återkoppling.
+      </p>
+    </div>
 
-        <div class="service-grid">
-          @forelse($services->take(6) as $service)
-            <article class="service-card">
-              <h3>{{ $service->name }}</h3>
+    <div class="service-grid">
+      @forelse($services->take(6) as $service)
+        <article class="service-card">
+          <h3>{{ $service->name }}</h3>
 
-              <p>
-                {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
-              </p>
+          <p>
+            {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
+          </p>
 
-              <ul>
-                @if($service->pricing_mode === 'frequency')
-                  <li>Flexibla intervaller och återkommande upplägg</li>
-                  <li>Pris beräknas efter storlek och frekvens</li>
-                  <li>Passar för löpande hemstädning</li>
-                @else
-                  <li>Tydliga prisintervall utifrån bostadens storlek</li>
-                  <li>Kan kombineras med tilläggstjänster</li>
-                  <li>Snabb offert och enkel bokning</li>
-                @endif
-              </ul>
+          <ul>
+            @if($service->pricing_mode === 'frequency')
+              <li>Flexibla intervaller och återkommande upplägg</li>
+              <li>Pris beräknas efter storlek och frekvens</li>
+              <li>Passar för löpande hemstädning</li>
+            @else
+              <li>Tydliga prisintervall utifrån bostadens storlek</li>
+              <li>Kan kombineras med tilläggstjänster</li>
+              <li>Snabb offert och enkel bokning</li>
+            @endif
+          </ul>
 
-              @if($service->slug === 'fonsterputsning')
-                <a href="{{ route('window-cleaning') }}" class="btn btn-secondary btn-sm">
-                  Till Fönsterputsning
-                </a>
-              @endif
-            </article>
-          @empty
-            <article class="service-card">
-              <h3>Tjänster uppdateras</h3>
-              <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
-            </article>
-          @endforelse
-        </div>
-      </div>
-    </section>
+          @if($service->slug === 'fonsterputsning')
+            <a href="{{ route('window-cleaning') }}" class="btn btn-secondary btn-sm">
+              Till Fönsterputsning
+            </a>
+          @elseif($service->slug === 'hemstadning')
+            <a href="{{ route('services.private.show', 'hemstadning') }}" class="btn btn-secondary btn-sm">
+              Läs mer
+            </a>
+          @elseif($service->slug === 'flyttstadning')
+            <a href="{{ route('services.private.show', 'flyttstadning') }}" class="btn btn-secondary btn-sm">
+              Läs mer
+            </a>
+          @elseif($service->slug === 'storstadning')
+            <a href="{{ route('services.private.show', 'storstadning') }}" class="btn btn-secondary btn-sm">
+              Läs mer
+            </a>
+          @elseif($service->slug === 'visningsstadning')
+            <a href="{{ route('services.private.show', 'visningsstadning') }}" class="btn btn-secondary btn-sm">
+              Läs mer
+            </a>
+          @endif
+        </article>
+      @empty
+        <article class="service-card">
+          <h3>Tjänster uppdateras</h3>
+          <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
+        </article>
+      @endforelse
+    </div>
+  </div>
+</section>
 
     <section class="reco-section section section-soft">
-      <div class="container reco-shell">
-        <div class="reco-copy">
-          <span class="eyebrow">Reco</span>
-          <h2>Se vad våra kunder säger om oss</h2>
-          <p>Vi har lagt till en direktlänk till vår profilsida på Reco så att nya besökare enkelt kan läsa omdömen och få en snabbare bild av vårt arbete.</p>
-        </div>
+  <div class="container reco-shell">
+    <div class="reco-copy">
+      <span class="eyebrow">Reco</span>
+      <h2>Se vad våra kunder säger om oss</h2>
+      <p>
+        Transparens och förtroende är viktiga delar i vårt arbete.
+        På vår Reco-sida kan du läsa omdömen och få en bättre bild av hur
+        kunder upplever vårt bemötande, vår kvalitet och vår service.
+      </p>
+    </div>
 
-        <div class="reco-card">
-          <strong>Clean Source AB på Reco</strong>
-          <p>Läs recensioner, omdömen och se hur kunder upplever vårt arbete.</p>
-          <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-            Öppna Reco
-          </a>
-        </div>
-      </div>
-    </section>
+    <div class="reco-card">
+      <strong>Clean Source AB på Reco</strong>
+      <p>Läs recensioner och omdömen direkt på vår profilsida.</p>
+      <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        Öppna Reco
+      </a>
+    </div>
+  </div>
+</section>
 
     <section class="section section-highlight">
       <div class="container">
@@ -505,148 +528,171 @@
     </section>
 
     <section class="testimonials section">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">Kundomdömen</span>
-          <h2>Vad våra kunder uppskattar</h2>
-        </div>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Kundomdömen</span>
+      <h2>Vad våra kunder uppskattar</h2>
+      <p>
+        Några exempel på hur våra kunder beskriver samarbetet med Clean Source AB.
+      </p>
+    </div>
 
-        <div class="testimonial-grid">
-          @forelse($displayTestimonials as $testimonial)
-            <blockquote class="testimonial-card">
-              <p>"{{ $testimonial->quote }}"</p>
-              <footer>
-                {{ $testimonial->name }}
-                @if(!empty($testimonial->location))
-                  , {{ $testimonial->location }}
-                @endif
-              </footer>
-            </blockquote>
-          @empty
-            <blockquote class="testimonial-card">
-              <p>"Snabb offert, trevligt bemötande och mycket noggrann städning."</p>
-              <footer>Kundomdömen uppdateras</footer>
-            </blockquote>
-          @endforelse
-        </div>
-      </div>
-    </section>
+    <div class="testimonial-grid">
+      @forelse($testimonials as $testimonial)
+        @php
+          $testimonialText = $testimonial->quote ?? $testimonial->content ?? $testimonial->comment ?? '';
+          $testimonialLocation = $testimonial->location ?? $testimonial->city ?? '';
+        @endphp
+
+        <article class="testimonial-card">
+          <div class="testimonial-card__icon">“</div>
+
+          @if(!empty($testimonialText))
+            <p class="testimonial-card__text">"{{ $testimonialText }}"</p>
+          @else
+            <p class="testimonial-card__text">"Kundomdöme uppdateras snart."</p>
+          @endif
+
+          <footer class="testimonial-card__footer">
+            <strong>{{ $testimonial->name }}</strong>
+
+            @if(!empty($testimonialLocation))
+              <span>{{ $testimonialLocation }}</span>
+            @endif
+          </footer>
+        </article>
+      @empty
+        <article class="testimonial-card">
+          <div class="testimonial-card__icon">“</div>
+          <p class="testimonial-card__text">"Snabb återkoppling, trevligt bemötande och noggrant utförd städning."</p>
+          <footer class="testimonial-card__footer">
+            <strong>Kundomdömen uppdateras</strong>
+          </footer>
+        </article>
+      @endforelse
+    </div>
+  </div>
+</section>
 
     <section class="contact section section-soft" id="contact">
-      <div class="container contact-grid">
-        <div>
-          <span class="eyebrow">Boka eller bli uppringd</span>
-          <h2>Skicka en förfrågan så kontaktar vi dig</h2>
-          <p>Fyll i formuläret så återkommer vi med offert eller förslag på upplägg under våra öppettider.</p>
+  <div class="container contact-grid">
+    <div>
+      <span class="eyebrow">Boka eller bli uppringd</span>
+      <h2>Skicka en förfrågan så kontaktar vi dig</h2>
+      <p>
+        Fyll i formuläret så återkommer vi med offert eller förslag på upplägg.
+        Vi hjälper både privatpersoner och företag i Stockholm med tydlig planering
+        och snabb återkoppling.
+      </p>
 
-          <div class="contact-cards">
-            <article>
-              <strong>Mobil</strong>
-              <a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a>
-            </article>
+      <div class="contact-cards">
+        <article>
+          <strong>Mobil</strong>
+          <a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a>
+        </article>
 
-            @if($phoneSecondary)
-              <article>
-                <strong>Växel</strong>
-                <a href="tel:{{ preg_replace('/\s+/', '', $phoneSecondary) }}">{{ $phoneSecondary }}</a>
-              </article>
-            @endif
+        @if($phoneSecondary)
+          <article>
+            <strong>Växel</strong>
+            <a href="tel:{{ preg_replace('/\s+/', '', $phoneSecondary) }}">{{ $phoneSecondary }}</a>
+          </article>
+        @endif
 
-            <article>
-              <strong>E-post</strong>
-              <a href="mailto:{{ $email }}">{{ $email }}</a>
-            </article>
+        <article>
+          <strong>E-post</strong>
+          <a href="mailto:{{ $email }}">{{ $email }}</a>
+        </article>
 
-            <article>
-              <strong>Adress</strong>
-              <p>{{ $addressLine }}</p>
-            </article>
-          </div>
-        </div>
+        <article>
+          <strong>Adress</strong>
+          <p>{{ $addressLine }}</p>
+        </article>
+      </div>
+    </div>
 
-        <form class="booking-form" id="booking-form" method="POST" action="{{ route('contact.store') }}" novalidate>
-          @csrf
+    <form class="booking-form" id="booking-form" method="POST" action="{{ route('contact.store') }}" novalidate>
+      @csrf
 
-          <input type="hidden" name="calculator_summary" id="calculator-summary-input">
-          <input type="hidden" name="booking_slot_id" id="booking-slot-id-input">
-          <input type="hidden" name="booking_date" id="booking-date-input">
-          <input type="hidden" name="booking_time_from" id="booking-time-from-input">
-          <input type="hidden" name="booking_time_to" id="booking-time-to-input">
+      <input type="hidden" name="calculator_summary" id="calculator-summary-input">
+      <input type="hidden" name="booking_slot_id" id="booking-slot-id-input">
+      <input type="hidden" name="booking_date" id="booking-date-input">
+      <input type="hidden" name="booking_time_from" id="booking-time-from-input">
+      <input type="hidden" name="booking_time_to" id="booking-time-to-input">
 
-          <div class="form-row">
-            <label>
-              Namn
-              <input type="text" name="name" autocomplete="name" required />
-            </label>
+      <div class="form-row">
+        <label>
+          Namn
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
 
-            <label>
-              E-post
-              <input type="email" name="email" autocomplete="email" required />
-            </label>
-          </div>
+        <label>
+          E-post
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+      </div>
 
-          <div class="form-row">
-            <label>
-              Telefon
-              <input type="tel" name="phone" autocomplete="tel" required />
-            </label>
+      <div class="form-row">
+        <label>
+          Telefon
+          <input type="tel" name="phone" autocomplete="tel" required />
+        </label>
 
-            <label>
-              Tjänst
-              <select name="service" id="contact-service" required>
-                <option value="">Välj tjänst</option>
-                @foreach($services as $service)
-                  <option value="{{ $service->name }}">{{ $service->name }}</option>
-                @endforeach
-              </select>
-            </label>
-          </div>
+        <label>
+          Tjänst
+          <select name="service" id="contact-service" required>
+            <option value="">Välj tjänst</option>
+            @foreach($services as $service)
+              <option value="{{ $service->name }}">{{ $service->name }}</option>
+            @endforeach
+          </select>
+        </label>
+      </div>
 
-          <div id="booking-customer-fields" hidden>
-            <div class="form-row">
-              <label>
-                Personnummer
-                <input
-                  type="text"
-                  name="personnummer"
-                  id="booking-personnummer"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  placeholder="YYYYMMDDXXXX eller YYMMDDXXXX"
-                />
-              </label>
-
-              <label>
-                Adress
-                <input
-                  type="text"
-                  name="address"
-                  id="booking-address"
-                  autocomplete="street-address"
-                  placeholder="Gatuadress och lägenhetsnummer"
-                />
-              </label>
-            </div>
-
-            <p class="form-note">
-              För bokning med RUT-avdrag behöver vi personnummer och adress.
-            </p>
-          </div>
-
+      <div id="booking-customer-fields" hidden>
+        <div class="form-row">
           <label>
-            Meddelande
-            <textarea
-              name="message"
-              rows="5"
-              placeholder="Beskriv bostad, önskat datum eller vad du behöver hjälp med."
-            ></textarea>
+            Personnummer
+            <input
+              type="text"
+              name="personnummer"
+              id="booking-personnummer"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="YYYYMMDDXXXX eller YYMMDDXXXX"
+            />
           </label>
 
-          <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
-          <p class="form-status" id="form-status" aria-live="polite"></p>
-        </form>
+          <label>
+            Adress
+            <input
+              type="text"
+              name="address"
+              id="booking-address"
+              autocomplete="street-address"
+              placeholder="Gatuadress och lägenhetsnummer"
+            />
+          </label>
+        </div>
+
+        <p class="form-note">
+          För bokning med RUT-avdrag behöver vi personnummer och adress.
+        </p>
       </div>
-    </section>
+
+      <label>
+        Meddelande
+        <textarea
+          name="message"
+          rows="5"
+          placeholder="Beskriv bostad, lokal eller vad du behöver hjälp med."
+        ></textarea>
+      </label>
+
+      <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
+      <p class="form-status" id="form-status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
 
     <section class="faq section" id="faq">
       <div class="container">
