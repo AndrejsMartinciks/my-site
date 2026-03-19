@@ -5,14 +5,20 @@ const form = document.querySelector('#booking-form');
 const statusEl = document.querySelector('#form-status');
 const yearEl = document.querySelector('#year');
 
-function setStatus(message = '', type = '') {
+function setStatus(message = '', type = '', options = {}) {
   if (!statusEl) return;
+
+  const { scroll = false } = options;
 
   statusEl.textContent = message;
   statusEl.className = 'form-status';
 
   if (type) {
     statusEl.classList.add(type);
+  }
+
+  if (scroll && message) {
+    statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
@@ -58,6 +64,10 @@ async function submitToServer(formData) {
     if (response.status === 422 && data.errors) {
       const firstError = Object.values(data.errors).flat()[0];
       throw new Error(firstError || 'Kontrollera formuläret och försök igen.');
+    }
+
+    if (response.status === 409) {
+      throw new Error(data.message || 'Den valda tiden är inte längre tillgänglig. Välj en annan ledig tid.');
     }
 
     throw new Error(data.message || 'Kunde inte skicka formuläret till servern.');
@@ -184,7 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!serviceEl || !sqmEl || !totalEl || !applyBtn) return;
 
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  const submitBtnDefaultText = submitBtn ? submitBtn.textContent.trim() : 'Skicka förfrågan';
+
   let selectedBookingSlot = null;
+  let isSubmitting = false;
 
   function normalizeText(value = '') {
     return String(value)
@@ -208,46 +222,79 @@ document.addEventListener('DOMContentLoaded', () => {
     return calcData.services?.[serviceName] || null;
   }
 
-  function parseRanges(rangeString = '') {
-    return String(rangeString)
-      .split('|')
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .map((item) => {
-        const match = item.match(/(\d+)\s*-\s*(\d+)\s*:\s*(\d+)/);
-
-        if (!match) return null;
-
-        return {
-          min: Number(match[1]),
-          max: Number(match[2]),
-          price: Number(match[3]),
-        };
-      })
-      .filter(Boolean);
+  function normalizePersonnummerValue(value = '') {
+    return String(value).replace(/[^\d]/g, '');
   }
 
-  function getPriceFromRanges(rangeString, sqm) {
-    const ranges = parseRanges(rangeString);
+  function formatPersonnummerForDisplay(value = '') {
+    const digits = normalizePersonnummerValue(value);
 
-    const found = ranges.find((range) => sqm >= range.min && sqm <= range.max);
-    return found ? found.price : null;
+    if (digits.length <= 6) {
+      return digits;
+    }
+
+    if (digits.length <= 10) {
+      return `${digits.slice(0, 6)}-${digits.slice(6, 10)}`;
+    }
+
+    return `${digits.slice(0, 8)}-${digits.slice(8, 12)}`;
   }
 
-  function getSelectedFrequency() {
-    const checked = document.querySelector('input[name="calc-frequency"]:checked');
-    return checked ? checked.value : '';
+  function clearPersonnummerValidity() {
+    if (personnummerInput) {
+      personnummerInput.setCustomValidity('');
+    }
   }
 
-  function getSelectedSupplementItems() {
-    return [...document.querySelectorAll('.calc-supplement:checked')].map((el) => ({
-      name: el.dataset.name || '',
-      price: Number(el.dataset.price || 0),
-    }));
+  function showPersonnummerValidity(message) {
+    if (!personnummerInput) return;
+
+    personnummerInput.setCustomValidity(message);
+    personnummerInput.reportValidity();
   }
 
-  function getSupplementsTotal() {
-    return getSelectedSupplementItems().reduce((sum, item) => sum + item.price, 0);
+  function isValidSwedishPersonnummer(value = '') {
+    const digits = normalizePersonnummerValue(value);
+    const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+    if (isLocalHost) {
+      return [10, 12].includes(digits.length);
+    }
+
+    if (![10, 12].includes(digits.length)) {
+      return false;
+    }
+
+    const tenDigits = digits.length === 12 ? digits.slice(-10) : digits;
+    let sum = 0;
+
+    for (let i = 0; i < tenDigits.length; i += 1) {
+      let number = Number(tenDigits[i]);
+
+      if (i % 2 === 0) {
+        number *= 2;
+
+        if (number > 9) {
+          number -= 9;
+        }
+      }
+
+      sum += number;
+    }
+
+    return sum % 10 === 0;
+  }
+
+  function setSubmitState(loading) {
+    if (!submitBtn) return;
+
+    submitBtn.disabled = loading;
+    submitBtn.classList.toggle('is-loading', loading);
+    submitBtn.textContent = loading ? 'Skickar...' : submitBtnDefaultText;
+
+    if (form) {
+      form.setAttribute('aria-busy', loading ? 'true' : 'false');
+    }
   }
 
   function clearBookingHiddenInputs() {
@@ -291,13 +338,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (personnummerInput) {
       personnummerInput.required = bookingMode;
-      if (!bookingMode) personnummerInput.value = '';
+
+      if (!bookingMode) {
+        personnummerInput.value = '';
+        clearPersonnummerValidity();
+      }
     }
 
     if (addressInput) {
       addressInput.required = bookingMode;
-      if (!bookingMode) addressInput.value = '';
+
+      if (!bookingMode) {
+        addressInput.value = '';
+      }
     }
+  }
+
+  function parseRanges(rangeString = '') {
+    return String(rangeString)
+      .split('|')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const match = item.match(/(\d+)\s*-\s*(\d+)\s*:\s*(\d+)/);
+
+        if (!match) return null;
+
+        return {
+          min: Number(match[1]),
+          max: Number(match[2]),
+          price: Number(match[3]),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function getPriceFromRanges(rangeString, sqm) {
+    const ranges = parseRanges(rangeString);
+    const found = ranges.find((range) => sqm >= range.min && sqm <= range.max);
+
+    return found ? found.price : null;
+  }
+
+  function getSelectedFrequency() {
+    const checked = document.querySelector('input[name="calc-frequency"]:checked');
+    return checked ? checked.value : '';
+  }
+
+  function getSelectedSupplementItems() {
+    return [...document.querySelectorAll('.calc-supplement:checked')].map((el) => ({
+      name: el.dataset.name || '',
+      price: Number(el.dataset.price || 0),
+    }));
+  }
+
+  function getSupplementsTotal() {
+    return getSelectedSupplementItems().reduce((sum, item) => sum + item.price, 0);
   }
 
   function renderFrequencyOptions(serviceName) {
@@ -501,7 +597,11 @@ document.addEventListener('DOMContentLoaded', () => {
       totalEl.textContent = '- kr';
       messageEl.textContent = 'Välj en tjänst för att börja.';
       updateApplyButtonState(null);
-      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+
+      if (calculatorSummaryInput) {
+        calculatorSummaryInput.value = '';
+      }
+
       return;
     }
 
@@ -509,7 +609,11 @@ document.addEventListener('DOMContentLoaded', () => {
       totalEl.textContent = '- kr';
       messageEl.textContent = 'Ange kvadratmeter för att se pris.';
       updateApplyButtonState(null);
-      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+
+      if (calculatorSummaryInput) {
+        calculatorSummaryInput.value = '';
+      }
+
       return;
     }
 
@@ -517,7 +621,11 @@ document.addEventListener('DOMContentLoaded', () => {
       totalEl.textContent = '- kr';
       messageEl.textContent = 'Vi kunde inte hitta ett pris för den valda storleken.';
       updateApplyButtonState(null);
-      if (calculatorSummaryInput) calculatorSummaryInput.value = '';
+
+      if (calculatorSummaryInput) {
+        calculatorSummaryInput.value = '';
+      }
+
       return;
     }
 
@@ -612,6 +720,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function focusFirstInvalidField() {
+    const invalidField = form?.querySelector(':invalid');
+
+    if (invalidField && typeof invalidField.focus === 'function') {
+      invalidField.focus();
+    }
+  }
+
+  function focusContactForm(serviceName = '') {
+    const contactSection = document.getElementById('contact');
+
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    window.setTimeout(() => {
+      if (isBookingService(serviceName)) {
+        personnummerInput?.focus();
+      } else {
+        form?.querySelector('input[name="name"]')?.focus();
+      }
+    }, 350);
+  }
+
   function resetCalculatorForm() {
     serviceEl.value = '';
     sqmEl.value = '';
@@ -660,7 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderFrequencyOptions(serviceName);
     renderSupplements(serviceName);
     renderBookingSection(serviceName);
-    toggleBookingCustomerFields(formServiceEl ? formServiceEl.value : '');
 
     updateCalculator();
   });
@@ -688,6 +819,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (personnummerInput) {
+    personnummerInput.addEventListener('input', () => {
+      clearPersonnummerValidity();
+    });
+
+    personnummerInput.addEventListener('blur', () => {
+      clearPersonnummerValidity();
+
+      const formattedValue = formatPersonnummerForDisplay(personnummerInput.value);
+      personnummerInput.value = formattedValue;
+
+      if (!formattedValue) {
+        return;
+      }
+
+      if (!isValidSwedishPersonnummer(formattedValue)) {
+        showPersonnummerValidity('Ange ett giltigt personnummer i format YYYYMMDDXXXX eller YYMMDDXXXX.');
+      }
+    });
+  }
+
   applyBtn.addEventListener('click', () => {
     const serviceName = serviceEl.value;
     const sqm = Number(sqmEl.value);
@@ -712,42 +864,80 @@ document.addEventListener('DOMContentLoaded', () => {
       calculatorSummaryInput.value = buildCalculatorSummary();
     }
 
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    focusContactForm(serviceName);
   });
 
   resetCalculatorForm();
+  toggleBookingCustomerFields(formServiceEl ? formServiceEl.value : '');
 
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+
+      if (isSubmitting) {
+        return;
+      }
+
+      clearPersonnummerValidity();
       setStatus('', '');
 
+      const selectedService = String(formServiceEl?.value || form.querySelector('select[name="service"]')?.value || '').trim();
+      const currentBookingDate = bookingDateInput?.value || '';
+      const currentBookingLabel = selectedBookingSlot
+        ? `${selectedBookingSlot.date} ${selectedBookingSlot.time_from}-${selectedBookingSlot.time_to}`
+        : '';
+
+      if (!form.reportValidity()) {
+        focusFirstInvalidField();
+        setStatus('Kontrollera formuläret och fyll i alla obligatoriska fält korrekt.', 'is-error', { scroll: true });
+        return;
+      }
+
+      if (isBookingService(selectedService)) {
+        const rawPersonnummer = personnummerInput?.value || '';
+        const normalizedPersonnummer = normalizePersonnummerValue(rawPersonnummer);
+
+        if (personnummerInput) {
+          personnummerInput.value = normalizedPersonnummer;
+        }
+
+        if (!String(bookingSlotIdInput?.value || '').trim()) {
+          setStatus('Välj först datum och en ledig tid i prisberäknaren.', 'is-error', { scroll: true });
+          bookingDateEl?.focus();
+          return;
+        }
+
+        if (!normalizedPersonnummer) {
+          const message = 'Personnummer är obligatoriskt för RUT-avdrag.';
+          setStatus(message, 'is-error', { scroll: true });
+          showPersonnummerValidity(message);
+          personnummerInput?.focus();
+          return;
+        }
+
+        if (!isValidSwedishPersonnummer(normalizedPersonnummer)) {
+          const message = 'Ange ett giltigt personnummer i format YYYYMMDDXXXX eller YYMMDDXXXX.';
+          setStatus(message, 'is-error', { scroll: true });
+          showPersonnummerValidity(message);
+          personnummerInput?.focus();
+          return;
+        }
+
+        if (!String(addressInput?.value || '').trim()) {
+          setStatus('Fyll i adress för att fortsätta bokningen.', 'is-error', { scroll: true });
+          addressInput?.focus();
+          return;
+        }
+      }
+
       const formData = new FormData(form);
-      const selectedService = String(formData.get('service') || '').trim();
 
       if (calculatorSummaryInput && calculatorSummaryInput.value) {
         formData.set('calculator_summary', calculatorSummaryInput.value);
       }
 
-      if (isBookingService(selectedService)) {
-        if (!String(formData.get('booking_slot_id') || '').trim()) {
-          setStatus('Välj först en ledig tid i prisberäknaren.', 'is-error');
-          return;
-        }
-
-        if (!String(formData.get('personnummer') || '').trim()) {
-          setStatus('Fyll i personnummer för att fortsätta bokningen.', 'is-error');
-          return;
-        }
-
-        if (!String(formData.get('address') || '').trim()) {
-          setStatus('Fyll i adress för att fortsätta bokningen.', 'is-error');
-          return;
-        }
-      }
+      isSubmitting = true;
+      setSubmitState(true);
 
       try {
         const wasBookingService = isBookingService(selectedService);
@@ -764,18 +954,32 @@ document.addEventListener('DOMContentLoaded', () => {
         resetCalculatorForm();
 
         if (wasBookingService) {
-          setStatus(
-            'Tack! Din bokningsförfrågan har skickats. Vi bekräftar tiden så snart som möjligt.',
-            'is-success'
-          );
+          const successText = currentBookingLabel
+            ? `Tack! Din bokningsförfrågan har skickats för ${currentBookingLabel}. Vi bekräftar tiden så snart som möjligt.`
+            : 'Tack! Din bokningsförfrågan har skickats. Vi bekräftar tiden så snart som möjligt.';
+
+          setStatus(successText, 'is-success', { scroll: true });
         } else {
           setStatus(
             'Tack! Din förfrågan har skickats. Vi återkommer så snart som möjligt.',
-            'is-success'
+            'is-success',
+            { scroll: true }
           );
         }
       } catch (error) {
-        setStatus(error.message || 'Kunde inte skicka formuläret till servern.', 'is-error');
+        const message = error.message || 'Kunde inte skicka formuläret till servern.';
+        setStatus(message, 'is-error', { scroll: true });
+
+        if (
+          isBookingService(selectedService) &&
+          currentBookingDate &&
+          /ledig|tillgänglig|bookad|slot|tid/i.test(message)
+        ) {
+          await loadAvailableBookingSlots(currentBookingDate);
+        }
+      } finally {
+        isSubmitting = false;
+        setSubmitState(false);
       }
     });
   }

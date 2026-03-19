@@ -1162,4 +1162,27 @@ body.has-cookie-banner {
   font-size: 14px;
   opacity: 0.85;
 }
+.booking-form[aria-busy="true"] {
+  opacity: 0.96;
+}
+
+.booking-form .btn.is-loading,
+.booking-form .btn:disabled {
+  cursor: wait;
+  opacity: 0.75;
+  transform: none;
+}
+
+.form-status {
+  scroll-margin-top: 120px;
+}
+
+#calc-booking-slots .btn {
+  min-width: 140px;
+}
+
+#calc-booking-slots .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 }
