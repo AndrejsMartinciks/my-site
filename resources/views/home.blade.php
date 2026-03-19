@@ -2,115 +2,141 @@
 <html lang="sv">
 <head>
   @php
-  $companyName = $siteSettings->company_name ?? 'CleanS AB';
-  $phonePrimary = $siteSettings->phone_primary ?? '+46707413772';
-  $phoneSecondary = $siteSettings->phone_secondary ?? '+468838538';
-  $email = $siteSettings->email ?? 'info@cleansource.se';
-  $addressLine = trim(implode(', ', array_filter([
-      $siteSettings->address ?? 'Ångermannagatan 121',
-      trim(implode(' ', array_filter([
-          $siteSettings->postal_code ?? '162 64',
-          $siteSettings->city ?? 'Vällingby',
-      ]))),
-  ])));
-  $orgNumber = $siteSettings->org_number ?? '556988-2722';
+    use Illuminate\Support\Str;
 
-  $heroEyebrow = $siteSettings->hero_eyebrow ?? 'Hemstädning • Flyttstädning • Fönsterputs';
-  $heroTitle = $siteSettings->hero_title ?? 'Rent hemma, mer tid över för livet.';
-  $heroText = $siteSettings->hero_text ?? 'Vi hjälper hushåll i Stockholm med noggrann städning, tydliga priser och snabb återkoppling.';
-  $heroPrimaryButtonText = $siteSettings->hero_primary_button_text ?? 'Få kostnadsfri offert';
-  $heroSecondaryButtonText = $siteSettings->hero_secondary_button_text ?? 'Se våra tjänster';
+    $companyName = $siteSettings->company_name ?? 'Clean Source AB';
+    $phonePrimary = $siteSettings->phone_primary ?? '+46707413772';
+    $phoneSecondary = $siteSettings->phone_secondary ?? null;
+    $email = $siteSettings->email ?? 'info@cleansource.se';
+    $addressLine = trim(implode(', ', array_filter([
+        $siteSettings->address ?? 'Ångermannagatan 121',
+        trim(implode(' ', array_filter([
+            $siteSettings->postal_code ?? '162 64',
+            $siteSettings->city ?? 'Vällingby',
+        ]))),
+    ])));
+    $orgNumber = $siteSettings->org_number ?? '556988-2722';
 
-  $heroPoints = array_values(array_filter([
-      $siteSettings->hero_point_1 ?? '50% RUT-avdrag direkt på fakturan',
-      $siteSettings->hero_point_2 ?? 'Ansvarsförsäkring och kvalitetssäkring',
-      $siteSettings->hero_point_3 ?? 'Flexibla tider i hela Stockholm',
-  ]));
+    $bankgiro = '540-1054';
+    $swish = '1234591558';
+    $facebookUrl = 'https://www.facebook.com/profile.php?id=61558309301151#';
+    $instagramUrl = 'https://www.instagram.com/cleansource_ab?fbclid=IwY2xjawQo8LJleHRuA2FlbQIxMABicmlkETA4eHUzZGxBeUpiZkxBNzg3c3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHpOtXqviDqCw-KsJtrM-uqETaJcA4CwDl-_QvPLo8rSUKXChC4uCJo2eAOwU_aem_vhHTjVSzh9vhKuK3ae77RQ';
+    $recoUrl = 'https://www.reco.se/clean-source-ab#3102144';
 
-  $heroBadges = array_values(array_filter([
-      $siteSettings->hero_badge_1 ?? 'Försäkrade uppdrag',
-      $siteSettings->hero_badge_2 ?? 'Miljövänliga produkter',
-      $siteSettings->hero_badge_3 ?? 'Trygga rutiner',
-  ]));
+    $heroEyebrow = $siteSettings->hero_eyebrow ?? 'Städning för hem & företag i Stockholm';
+    $heroTitle = $siteSettings->hero_title ?? 'Trygg och noggrann städservice med tydlig bokning.';
+    $heroText = $siteSettings->hero_text ?? 'Clean Source AB hjälper privatpersoner och företag i Stockholm med städning, fönsterputsning och flyttrelaterade tjänster. Tydliga priser, snabb återkoppling och flexibla upplägg.';
+    $heroPrimaryButtonText = $siteSettings->hero_primary_button_text ?? 'Räkna ut pris';
+    $heroSecondaryButtonText = $siteSettings->hero_secondary_button_text ?? 'Begär offert';
 
-  $trustEyebrow = $siteSettings->trust_eyebrow ?? 'Därför väljer kunder oss';
-  $trustTitle = $siteSettings->trust_title ?? 'En enkel process med hög trygghet';
+    $heroPoints = array_values(array_filter([
+        $siteSettings->hero_point_1 ?? '50% RUT-avdrag direkt på fakturan',
+        $siteSettings->hero_point_2 ?? 'Ansvarsförsäkring och kvalitetssäkring',
+        $siteSettings->hero_point_3 ?? 'Flexibla tider i hela Stockholm',
+    ]));
 
-  $trustItems = [
-      [
-          'icon' => '✓',
-          'title' => $siteSettings->trust_item_1_title ?? 'Försäkring',
-          'text' => $siteSettings->trust_item_1_text ?? 'Våra uppdrag utförs med ansvarsförsäkring för extra trygghet i ditt hem.',
-      ],
-      [
-          'icon' => 'R',
-          'title' => $siteSettings->trust_item_2_title ?? 'RUT-avdrag',
-          'text' => $siteSettings->trust_item_2_text ?? 'Vi hanterar administrationen så att du bara betalar din reducerade kostnad.',
-      ],
-      [
-          'icon' => '★',
-          'title' => $siteSettings->trust_item_3_title ?? 'Utbildad personal',
-          'text' => $siteSettings->trust_item_3_text ?? 'Vårt team följer tydliga checklistor och kvalitetsrutiner för varje tjänst.',
-      ],
-      [
-          'icon' => '24',
-          'title' => $siteSettings->trust_item_4_title ?? 'Snabb kontakt',
-          'text' => $siteSettings->trust_item_4_text ?? 'Vi återkopplar snabbt på offertförfrågningar och hjälper dig hitta rätt upplägg.',
-      ],
-  ];
+    $heroBadges = array_values(array_filter([
+        $siteSettings->hero_badge_1 ?? 'För hem & företag',
+        $siteSettings->hero_badge_2 ?? 'Tydliga priser',
+        $siteSettings->hero_badge_3 ?? 'Snabb återkoppling',
+    ]));
 
-  $aboutEyebrow = $siteSettings->about_eyebrow ?? ('Om ' . $companyName);
-  $aboutTitle = $siteSettings->about_title ?? 'Vi bygger långsiktigt förtroende i varje uppdrag';
-  $aboutText1 = $siteSettings->about_text_1 ?? 'Att släppa in någon i sitt hem kräver trygghet. Därför arbetar vi med tydliga rutiner, god kommunikation och ett servicetänk som gör det enkelt att bli återkommande kund.';
-  $aboutText2 = $siteSettings->about_text_2 ?? 'Vi kombinerar erfarenhet med moderna arbetsmetoder och miljömedvetna produkter. Målet är att du ska känna att allt fungerar smidigt från första kontakt till avslutat uppdrag.';
-  $aboutCheckTitle = $siteSettings->about_check_title ?? 'Så arbetar vi';
-  $aboutChecks = array_values(array_filter([
-      $siteSettings->about_check_1 ?? 'Behovsanalys innan start',
-      $siteSettings->about_check_2 ?? 'Fast kontaktperson för återkommande kunder',
-      $siteSettings->about_check_3 ?? 'Dokumenterade checklistor per tjänst',
-      $siteSettings->about_check_4 ?? 'Flexibel bokning och tydlig kommunikation',
-  ]));
+    $trustEyebrow = $siteSettings->trust_eyebrow ?? 'Därför väljer kunder oss';
+    $trustTitle = $siteSettings->trust_title ?? 'En modern och trygg städpartner';
 
-  $rutEyebrow = $siteSettings->rut_eyebrow ?? 'RUT-avdrag för städning';
-  $rutTitle = $siteSettings->rut_title ?? 'Du betalar bara halva arbetskostnaden';
-  $rutText1 = $siteSettings->rut_text_1 ?? 'Som privatperson kan du i många fall använda RUT-avdrag för hushållsnära tjänster. Det innebär att halva arbetskostnaden dras direkt på fakturan, medan vi sköter administrationen.';
-  $rutText2 = $siteSettings->rut_text_2 ?? 'På så sätt blir professionell städning mer tillgänglig och du får ett tydligt pris redan från början.';
+    $trustItems = [
+        [
+            'icon' => '✓',
+            'title' => $siteSettings->trust_item_1_title ?? 'Tryggt',
+            'text' => $siteSettings->trust_item_1_text ?? 'Vi arbetar med tydliga rutiner, ansvarsförsäkring och personlig kontakt genom hela processen.',
+        ],
+        [
+            'icon' => '★',
+            'title' => $siteSettings->trust_item_2_title ?? 'Kvalitet',
+            'text' => $siteSettings->trust_item_2_text ?? 'Vårt team arbetar noggrant och strukturerat för ett jämnt resultat i varje uppdrag.',
+        ],
+        [
+            'icon' => '24',
+            'title' => $siteSettings->trust_item_3_title ?? 'Flexibelt',
+            'text' => $siteSettings->trust_item_3_text ?? 'Boka enstaka uppdrag eller återkommande städning — vi anpassar upplägget efter ditt behov.',
+        ],
+        [
+            'icon' => 'R',
+            'title' => $siteSettings->trust_item_4_title ?? 'RUT-avdrag',
+            'text' => $siteSettings->trust_item_4_text ?? 'Vi hjälper dig med korrekt underlag så att din hushållsnära tjänst blir enkel att hantera.',
+        ],
+    ];
 
-  $footerText = $siteSettings->footer_text ?? 'Modern, trygg och tydlig städservice för privatpersoner i Stockholm.';
+    $aboutEyebrow = $siteSettings->about_eyebrow ?? ('Om ' . $companyName);
+    $aboutTitle = $siteSettings->about_title ?? 'Städning med fokus på kvalitet, trygghet och enkel kommunikation';
+    $aboutText1 = $siteSettings->about_text_1 ?? 'Vi hjälper kunder i Stockholm med städtjänster för både hem och företag. Vår ambition är att göra bokning, kontakt och utförande så smidigt som möjligt.';
+    $aboutText2 = $siteSettings->about_text_2 ?? 'Med tydliga rutiner, ett vänligt bemötande och noggrant utförda uppdrag vill vi vara en pålitlig partner när du behöver professionell städning.';
+    $aboutCheckTitle = $siteSettings->about_check_title ?? 'Så arbetar vi';
+    $aboutChecks = array_values(array_filter([
+        $siteSettings->about_check_1 ?? 'Tydlig offert och snabb återkoppling',
+        $siteSettings->about_check_2 ?? 'Anpassade upplägg för privat & företag',
+        $siteSettings->about_check_3 ?? 'Noggrann planering inför varje uppdrag',
+        $siteSettings->about_check_4 ?? 'Enkel kontakt före, under och efter bokning',
+    ]));
 
-  $seoTitle = $siteSettings->seo_title ?? ($companyName . ' | Hemstädning i Stockholm');
-  $seoDescription = $siteSettings->seo_description ?? 'Professionell hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning i Stockholm. Transparenta priser, RUT-avdrag och snabb bokning.';
+    $rutEyebrow = $siteSettings->rut_eyebrow ?? 'RUT-avdrag för privatpersoner';
+    $rutTitle = $siteSettings->rut_title ?? 'Du betalar bara halva arbetskostnaden';
+    $rutText1 = $siteSettings->rut_text_1 ?? 'För många hushållsnära tjänster kan du använda RUT-avdrag, vilket innebär att arbetskostnaden reduceras direkt på fakturan.';
+    $rutText2 = $siteSettings->rut_text_2 ?? 'Vi arbetar med tydlig information kring bokning och pris så att du enkelt ser vad som gäller för din tjänst.';
 
-  $hemstadningService = $services->first(function ($service) {
-      return \Illuminate\Support\Str::lower($service->name) === 'hemstädning';
-  });
+    $footerText = $siteSettings->footer_text ?? 'Professionell städservice i Stockholm för privatpersoner och företag.';
 
-  if (!$hemstadningService) {
-      $hemstadningService = $services->first(function ($service) {
-          return $service->pricing_mode === 'frequency';
-      });
-  }
+    $seoTitle = $siteSettings->seo_title ?? ($companyName . ' | Städning i Stockholm');
+    $seoDescription = $siteSettings->seo_description ?? 'Professionell hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning i Stockholm. Tydliga priser och snabb bokning.';
 
-  $priceCards = collect();
+    $hemstadningService = $services->first(function ($service) {
+        return Str::lower($service->name) === 'hemstädning';
+    });
 
-  if ($hemstadningService && $hemstadningService->pricing_mode === 'frequency') {
-      $priceCards = $hemstadningService->frequencies
-          ->map(function ($frequency) {
-              $lowestRange = $frequency->priceRanges->sortBy('price')->first();
+    if (!$hemstadningService) {
+        $hemstadningService = $services->first(function ($service) {
+            return $service->pricing_mode === 'frequency';
+        });
+    }
 
-              return [
-                  'label' => $frequency->name,
-                  'price' => $lowestRange?->price,
-              ];
-          })
-          ->filter(fn ($item) => !is_null($item['price']))
-          ->values();
-  }
+    $priceCards = collect();
 
-  $serviceIntro = $services->take(6);
-  $displayTestimonials = $testimonials->take(6);
-  $displayFaqs = $faqs->take(8);
-@endphp
+    if ($hemstadningService && $hemstadningService->pricing_mode === 'frequency') {
+        $priceCards = $hemstadningService->frequencies
+            ->map(function ($frequency) {
+                $lowestRange = $frequency->priceRanges->sortBy('price')->first();
+
+                return [
+                    'label' => $frequency->name,
+                    'price' => $lowestRange?->price,
+                ];
+            })
+            ->filter(fn ($item) => !is_null($item['price']))
+            ->values();
+    }
+
+    $serviceIntro = $services->take(6);
+    $displayTestimonials = $testimonials->take(6);
+    $displayFaqs = $faqs->take(8);
+
+    $privateMenu = [
+    ['label' => 'Hemstädning', 'href' => route('services.private.show', 'hemstadning')],
+    ['label' => 'Flyttstädning', 'href' => route('services.private.show', 'flyttstadning')],
+    ['label' => 'Fönsterputsning', 'href' => route('window-cleaning')],
+    ['label' => 'Byggstädning', 'href' => route('services.private.show', 'byggstadning')],
+    ['label' => 'Storstädning', 'href' => route('services.private.show', 'storstadning')],
+    ['label' => 'Visningsstädning', 'href' => route('services.private.show', 'visningsstadning')],
+    ];
+
+    $companyMenu = [
+    ['label' => 'Butiksstädning', 'href' => route('services.company.show', 'butiksstadning')],
+    ['label' => 'Flyttstädning', 'href' => route('services.company.show', 'flyttstadning')],
+    ['label' => 'Storstädning', 'href' => route('services.company.show', 'storstadning')],
+    ['label' => 'Fönsterputsning', 'href' => route('services.company.show', 'fonsterputsning')],
+    ['label' => 'Byggstädning', 'href' => route('services.company.show', 'byggstadning')],
+    ['label' => 'Kontorsstädning', 'href' => route('services.company.show', 'kontorsstadning')],
+    ];
+  @endphp
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -118,11 +144,16 @@
 
   <title>{{ $seoTitle }}</title>
   <meta name="description" content="{{ $seoDescription }}" />
-  <meta name="theme-color" content="#0f766e" />
+  <meta name="theme-color" content="#1f2b4d" />
   <link rel="canonical" href="{{ url('/') }}">
 
   <link rel="icon" href="{{ asset('images/favicon.ico') }}" sizes="any">
   <link rel="icon" type="image/png" href="{{ asset('images/favicon-32x32.png') }}" sizes="32x32">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}?v={{ filemtime(public_path('css/styles.css')) }}">
 
   @verbatim
@@ -130,9 +161,9 @@
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "CleanS AB",
+    "name": "Clean Source AB",
     "image": "https://cleans.se/favicon-32x32.png",
-    "description": "Städföretag i Stockholm med hemstädning, storstädning, flyttstädning, byggstädning och fönsterputsning.",
+    "description": "Städföretag i Stockholm med hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning.",
     "telephone": "+46707413772",
     "email": "info@cleansource.se",
     "address": {
@@ -142,8 +173,7 @@
       "postalCode": "162 64",
       "addressCountry": "SE"
     },
-    "areaServed": "Stockholm",
-    "priceRange": "249-289 SEK"
+    "areaServed": "Stockholm"
   }
   </script>
   @endverbatim
@@ -173,13 +203,27 @@
 
   <a class="skip-link" href="#main">Hoppa till innehåll</a>
 
+  <div class="site-topbar">
+    <div class="container site-topbar__inner">
+      <div class="site-topbar__left">
+        <a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a>
+        <a href="mailto:{{ $email }}">{{ $email }}</a>
+      </div>
+
+      <div class="site-topbar__right">
+        <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer">Reco</a>
+        <a href="#pricing">Pris</a>
+      </div>
+    </div>
+  </div>
+
   <header class="site-header" id="top">
     <div class="container nav-wrap">
-      <a class="brand" href="#top" aria-label="{{ $companyName }} startsida">
+      <a class="brand" href="{{ route('home') }}" aria-label="{{ $companyName }} startsida">
         <img src="{{ asset('images/logo.png') }}" alt="{{ $companyName }}" class="brand-logo">
         <span>
           <strong>{{ $companyName }}</strong>
-          <small>Trygg städning i Stockholm</small>
+          <small>Städning i Stockholm</small>
         </span>
       </a>
 
@@ -191,12 +235,27 @@
       </button>
 
       <nav id="site-nav" class="site-nav" aria-label="Huvudmeny">
-        <a href="#services">Tjänster</a>
-        <a href="#pricing">Priser</a>
-        <a href="#rut">RUT-avdrag</a>
+        <details class="nav-dropdown">
+          <summary>Städning</summary>
+          <div class="nav-dropdown__menu">
+            @foreach($privateMenu as $item)
+              <a href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+            @endforeach
+          </div>
+        </details>
+
+        <details class="nav-dropdown">
+          <summary>Företag</summary>
+          <div class="nav-dropdown__menu">
+            @foreach($companyMenu as $item)
+              <a href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+            @endforeach
+          </div>
+        </details>
+
         <a href="#about">Om oss</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contact" class="btn btn-sm btn-primary">Boka nu</a>
+        <a href="#pricing">Pris</a>
+        <a href="#contact" class="btn btn-sm btn-primary nav-cta">Begär offert</a>
       </nav>
     </div>
   </header>
@@ -208,14 +267,16 @@
           <span class="eyebrow">{{ $heroEyebrow }}</span>
           <h1>{{ $heroTitle }}</h1>
           <p class="lead">{{ $heroText }}</p>
+
           <div class="hero-actions">
             <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
-            <a href="#services" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
+            <a href="#contact" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
           </div>
+
           <ul class="hero-points" aria-label="Våra styrkor">
-          @foreach($heroPoints as $point)
-          <li>{{ $point }}</li>
-          @endforeach
+            @foreach($heroPoints as $point)
+              <li>{{ $point }}</li>
+            @endforeach
           </ul>
         </div>
 
@@ -244,10 +305,11 @@
               <span>kundomdömen</span>
             </article>
           </div>
+
           <div class="hero-badge-list">
-          @foreach($heroBadges as $badge)
-          <span>{{ $badge }}</span>
-          @endforeach
+            @foreach($heroBadges as $badge)
+              <span>{{ $badge }}</span>
+            @endforeach
           </div>
         </aside>
       </div>
@@ -256,90 +318,110 @@
     @include('partials.calculator')
 
     <section class="trust section section-soft">
-  <div class="container">
-    <div class="section-head compact">
-      <span class="eyebrow">{{ $trustEyebrow }}</span>
-      <h2>{{ $trustTitle }}</h2>
-    </div>
+      <div class="container">
+        <div class="section-head compact">
+          <span class="eyebrow">{{ $trustEyebrow }}</span>
+          <h2>{{ $trustTitle }}</h2>
+        </div>
 
-    <div class="feature-grid cols-4">
-      @foreach($trustItems as $item)
-        <article class="feature-card">
-          <div class="icon">{{ $item['icon'] }}</div>
-          <h3>{{ $item['title'] }}</h3>
-          <p>{{ $item['text'] }}</p>
-        </article>
-      @endforeach
-    </div>
-  </div>
-</section>
+        <div class="feature-grid cols-4">
+          @foreach($trustItems as $item)
+            <article class="feature-card">
+              <div class="icon">{{ $item['icon'] }}</div>
+              <h3>{{ $item['title'] }}</h3>
+              <p>{{ $item['text'] }}</p>
+            </article>
+          @endforeach
+        </div>
+      </div>
+    </section>
 
     <section class="services section" id="services">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Våra tjänster</span>
-      <h2>Professionell städservice för hem och flytt</h2>
-      <p>Vi erbjuder flexibla upplägg för både regelbunden städning och engångsuppdrag.</p>
-    </div>
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Våra tjänster</span>
+          <h2>Städning för privatpersoner och företag</h2>
+          <p>Vi erbjuder flexibla upplägg för både regelbunden städning och engångsuppdrag i hela Stockholm.</p>
+        </div>
 
-    <div class="service-grid">
-      @forelse($services->take(6) as $service)
-        <article class="service-card">
-          <h3>{{ $service->name }}</h3>
+        <div class="service-grid">
+          @forelse($services->take(6) as $service)
+            <article class="service-card">
+              <h3>{{ $service->name }}</h3>
 
-          <p>
-            {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
-          </p>
+              <p>
+                {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
+              </p>
 
-          <ul>
-            @if($service->pricing_mode === 'frequency')
-              <li>Flexibla intervaller och återkommande upplägg</li>
-              <li>Pris beräknas efter storlek och frekvens</li>
-              <li>Passar för löpande hemstädning</li>
-            @else
-              <li>Tydliga prisintervall utifrån bostadens storlek</li>
-              <li>Kan kombineras med tilläggstjänster</li>
-              <li>Snabb offert och enkel bokning</li>
-            @endif
-          </ul>
+              <ul>
+                @if($service->pricing_mode === 'frequency')
+                  <li>Flexibla intervaller och återkommande upplägg</li>
+                  <li>Pris beräknas efter storlek och frekvens</li>
+                  <li>Passar för löpande hemstädning</li>
+                @else
+                  <li>Tydliga prisintervall utifrån bostadens storlek</li>
+                  <li>Kan kombineras med tilläggstjänster</li>
+                  <li>Snabb offert och enkel bokning</li>
+                @endif
+              </ul>
 
-          @if($service->slug === 'fonsterputsning')
-            <a href="{{ route('window-cleaning') }}" class="btn btn-secondary btn-sm">
-              Till Fönsterputsning
-            </a>
-          @endif
-        </article>
-      @empty
-        <article class="service-card">
-          <h3>Tjänster uppdateras</h3>
-          <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
-        </article>
-      @endforelse
-    </div>
-  </div>
-</section>
-
-<section class="section section-soft">
-  <div class="container">
-    <div class="quote-box" style="max-width: 100%;">
-      <span class="eyebrow">Fönsterputsning</span>
-      <h2>Boka professionell fönsterputsning</h2>
-      <p>
-        Behöver du hjälp med rena fönster hemma eller inför en flytt?
-        Gå till vår separata sida för Fönsterputsning med egen bokning och prislogik.
-      </p>
-
-      <div class="hero-actions">
-        <a href="{{ route('window-cleaning') }}" class="btn btn-primary">
-          Gå till Fönsterputsning
-        </a>
-        <a href="#contact" class="btn btn-secondary">
-          Kontakta oss först
-        </a>
+              @if($service->slug === 'fonsterputsning')
+                <a href="{{ route('window-cleaning') }}" class="btn btn-secondary btn-sm">
+                  Till Fönsterputsning
+                </a>
+              @endif
+            </article>
+          @empty
+            <article class="service-card">
+              <h3>Tjänster uppdateras</h3>
+              <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
+            </article>
+          @endforelse
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
+
+    <section class="reco-section section section-soft">
+      <div class="container reco-shell">
+        <div class="reco-copy">
+          <span class="eyebrow">Reco</span>
+          <h2>Se vad våra kunder säger om oss</h2>
+          <p>Vi har lagt till en direktlänk till vår profilsida på Reco så att nya besökare enkelt kan läsa omdömen och få en snabbare bild av vårt arbete.</p>
+        </div>
+
+        <div class="reco-card">
+          <strong>Clean Source AB på Reco</strong>
+          <p>Läs recensioner, omdömen och se hur kunder upplever vårt arbete.</p>
+          <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            Öppna Reco
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-highlight">
+      <div class="container">
+        <div class="promo-panel">
+          <div>
+            <span class="eyebrow">Fönsterputsning</span>
+            <h2>Boka professionell fönsterputsning online</h2>
+            <p>
+              Behöver du hjälp med rena fönster hemma eller inför en flytt?
+              Gå till vår separata sida för Fönsterputsning med egen bokning och prislogik.
+            </p>
+          </div>
+
+          <div class="hero-actions">
+            <a href="{{ route('window-cleaning') }}" class="btn btn-primary">
+              Gå till Fönsterputsning
+            </a>
+            <a href="#contact" class="btn btn-secondary">
+              Kontakta oss först
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="pricing section section-soft" id="pricing">
       <div class="container pricing-grid">
@@ -385,42 +467,42 @@
     </section>
 
     <section class="about section" id="about">
-  <div class="container split-grid">
-    <div>
-      <span class="eyebrow">{{ $aboutEyebrow }}</span>
-      <h2>{{ $aboutTitle }}</h2>
-      <p>{{ $aboutText1 }}</p>
-      <p>{{ $aboutText2 }}</p>
-    </div>
+      <div class="container split-grid">
+        <div>
+          <span class="eyebrow">{{ $aboutEyebrow }}</span>
+          <h2>{{ $aboutTitle }}</h2>
+          <p>{{ $aboutText1 }}</p>
+          <p>{{ $aboutText2 }}</p>
+        </div>
 
-    <div class="check-panel">
-      <h3>{{ $aboutCheckTitle }}</h3>
-      <ul class="check-list">
-        @foreach($aboutChecks as $check)
-          <li>{{ $check }}</li>
-        @endforeach
-      </ul>
-    </div>
-  </div>
-</section>
+        <div class="check-panel">
+          <h3>{{ $aboutCheckTitle }}</h3>
+          <ul class="check-list">
+            @foreach($aboutChecks as $check)
+              <li>{{ $check }}</li>
+            @endforeach
+          </ul>
+        </div>
+      </div>
+    </section>
 
     <section class="rut section section-soft" id="rut">
-  <div class="container split-grid">
-    <div class="rut-visual" aria-hidden="true">
-      <div class="rut-circle">
-        <span>50%</span>
-        <small>RUT-avdrag</small>
-      </div>
-    </div>
+      <div class="container split-grid">
+        <div class="rut-visual" aria-hidden="true">
+          <div class="rut-circle">
+            <span>50%</span>
+            <small>RUT-avdrag</small>
+          </div>
+        </div>
 
-    <div>
-      <span class="eyebrow">{{ $rutEyebrow }}</span>
-      <h2>{{ $rutTitle }}</h2>
-      <p>{{ $rutText1 }}</p>
-      <p>{{ $rutText2 }}</p>
-    </div>
-  </div>
-</section>
+        <div>
+          <span class="eyebrow">{{ $rutEyebrow }}</span>
+          <h2>{{ $rutTitle }}</h2>
+          <p>{{ $rutText1 }}</p>
+          <p>{{ $rutText2 }}</p>
+        </div>
+      </div>
+    </section>
 
     <section class="testimonials section">
       <div class="container">
@@ -593,36 +675,65 @@
   <footer class="site-footer">
     <div class="container footer-grid">
       <div>
-        <a class="brand footer-brand" href="#top">
+        <a class="brand footer-brand" href="{{ route('home') }}">
           <img src="{{ asset('images/logo.png') }}" alt="{{ $companyName }}" class="brand-logo">
           <span>
             <strong>{{ $companyName }}</strong>
             <small>Städning i Stockholm</small>
           </span>
         </a>
+
         <p>{{ $footerText }}</p>
+
+        <div class="footer-contact-list">
+          <div><strong>Postadress:</strong> {{ $addressLine }}</div>
+          <div><strong>Org.nr:</strong> {{ $orgNumber }}</div>
+          <div><strong>Bankgiro:</strong> {{ $bankgiro }}</div>
+          <div><strong>Swish:</strong> {{ $swish }}</div>
+        </div>
+
+        <div class="footer-socials">
+          <a href="{{ $facebookUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.2-1.6 1.6-1.6H16.7V3.8c-.3 0-1.1-.1-2.1-.1-2.1 0-3.6 1.3-3.6 3.7V10H8v3h3V21h2.5Z" fill="currentColor"/>
+            </svg>
+          </a>
+
+          <a href="{{ $instagramUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm0 2.2A1.8 1.8 0 0 0 5.2 7v10c0 1 .8 1.8 1.8 1.8h10c1 0 1.8-.8 1.8-1.8V7c0-1-.8-1.8-1.8-1.8H7Zm10.6 1.7a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8ZM12 7.2A4.8 4.8 0 1 1 7.2 12 4.8 4.8 0 0 1 12 7.2Zm0 2.2A2.6 2.6 0 1 0 14.6 12 2.6 2.6 0 0 0 12 9.4Z" fill="currentColor"/>
+            </svg>
+          </a>
+
+          <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer" class="footer-reco-link">Reco</a>
+        </div>
       </div>
 
       <div>
-        <h3>Snabblänkar</h3>
+        <h3>Privatpersoner</h3>
         <ul>
-          <li><a href="#services">Tjänster</a></li>
-          <li><a href="#pricing">Priser</a></li>
-          <li><a href="#rut">RUT-avdrag</a></li>
-          <li><a href="#contact">Kontakt</a></li>
+          @foreach($privateMenu as $item)
+            <li><a href="{{ $item['href'] }}">{{ $item['label'] }}</a></li>
+          @endforeach
         </ul>
       </div>
 
       <div>
-        <h3>Kontakt</h3>
+        <h3>Företag</h3>
         <ul>
-          <li><a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a></li>
-          @if($phoneSecondary)
-            <li><a href="tel:{{ preg_replace('/\s+/', '', $phoneSecondary) }}">{{ $phoneSecondary }}</a></li>
-          @endif
-          <li><a href="mailto:{{ $email }}">{{ $email }}</a></li>
-          <li>{{ $addressLine }}</li>
-          <li>Org.nr: {{ $orgNumber }}</li>
+          @foreach($companyMenu as $item)
+            <li><a href="{{ $item['href'] }}">{{ $item['label'] }}</a></li>
+          @endforeach
+        </ul>
+      </div>
+
+      <div>
+        <h3>Övrigt</h3>
+        <ul>
+          <li><a href="#about">Om oss</a></li>
+          <li><a href="#pricing">Pris</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#contact">Kontakt</a></li>
         </ul>
       </div>
     </div>
