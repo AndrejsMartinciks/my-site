@@ -21,15 +21,30 @@ class WindowCleaningBookingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
     protected static string|UnitEnum|null $navigationGroup = 'Bookings';
-    protected static ?string $navigationLabel = 'Fönsterputs bokningar';
-    protected static ?string $modelLabel = 'Fönsterputs bokning';
-    protected static ?string $pluralModelLabel = 'Fönsterputs bokningar';
+    protected static ?string $navigationLabel = 'Fönsterputsning bokningar';
+    protected static ?string $modelLabel = 'Fönsterputsning bokning';
+    protected static ?string $pluralModelLabel = 'Fönsterputsning bokningar';
     protected static ?string $recordTitleAttribute = 'customer_name';
     protected static ?int $navigationSort = 20;
 
     public static function getSlug(?Panel $panel = null): string
     {
         return 'window-cleaning-bookings';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Booking::query()
+            ->where('booking_type', 'window_cleaning')
+            ->where('status', 'new')
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
     }
 
     public static function getEloquentQuery(): Builder

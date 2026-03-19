@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\WindowCleaningAdminNotification;
 use App\Mail\WindowCleaningCustomerConfirmation;
 use App\Models\Booking;
+use App\Models\BookingSlot;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Carbon\Carbon;
@@ -28,8 +29,8 @@ class WindowCleaningBookingController extends Controller
             'cleaning_scope' => ['required', 'in:inside,outside,both'],
             'addon_ids' => ['nullable', 'array'],
             'addon_ids.*' => ['integer'],
+            'booking_slot_id' => ['required', 'integer', 'exists:booking_slots,id'],
             'booking_date' => ['required', 'date', 'after_or_equal:today'],
-            'time_from' => ['required', 'date_format:H:i'],
             'customer_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
@@ -66,29 +67,7 @@ class WindowCleaningBookingController extends Controller
         $addonsTotal = (int) $addons->sum('price');
         $quotedPrice = $scopeAdjustedBasePrice + $addonsTotal;
 
-        $timeFrom = Carbon::createFromFormat('H:i', $validated['time_from']);
-        $timeTo = (clone $timeFrom)->addMinutes(120);
-
         $bookingDate = Carbon::parse($validated['booking_date'])->format('Y-m-d');
-
-        $conflictExists = Booking::query()
-            ->whereDate('booking_date', $bookingDate)
-            ->whereNotIn('status', ['cancelled'])
-            ->where(function ($query) use ($timeFrom, $timeTo) {
-                $query
-                    ->where(function ($subQuery) use ($timeFrom, $timeTo) {
-                        $subQuery
-                            ->where('time_from', '<', $timeTo->format('H:i:s'))
-                            ->where('time_to', '>', $timeFrom->format('H:i:s'));
-                    });
-            })
-            ->exists();
-
-        if ($conflictExists) {
-            throw ValidationException::withMessages([
-                'time_from' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
-            ]);
-        }
 
         $personnummerDigits = preg_replace('/\D+/', '', $validated['personnummer']);
         $personnummerLast4 = substr($personnummerDigits, -4);
@@ -100,21 +79,36 @@ class WindowCleaningBookingController extends Controller
         ];
 
         $booking = DB::transaction(function () use (
-            $service,
             $validated,
+            $service,
             $bookingDate,
-            $timeFrom,
-            $timeTo,
-            $personnummerLast4,
             $addons,
             $basePrice,
             $scopeMultiplier,
             $scopeAdjustedBasePrice,
             $addonsTotal,
             $quotedPrice,
+            $personnummerLast4,
             $scopeLabels
         ) {
-            $conflictExistsInsideTransaction = Booking::query()
+            $slot = BookingSlot::query()
+                ->whereKey($validated['booking_slot_id'])
+                ->whereDate('booking_date', $bookingDate)
+                ->where('service_id', $service->id)
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$slot || $slot->is_booked) {
+                throw ValidationException::withMessages([
+                    'booking_slot_id' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
+                ]);
+            }
+
+            $timeFrom = Carbon::parse($slot->time_from);
+            $timeTo = Carbon::parse($slot->time_to);
+
+            $conflictExists = Booking::query()
                 ->whereDate('booking_date', $bookingDate)
                 ->whereNotIn('status', ['cancelled'])
                 ->where('time_from', '<', $timeTo->format('H:i:s'))
@@ -122,19 +116,19 @@ class WindowCleaningBookingController extends Controller
                 ->lockForUpdate()
                 ->exists();
 
-            if ($conflictExistsInsideTransaction) {
+            if ($conflictExists) {
                 throw ValidationException::withMessages([
-                    'time_from' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
+                    'booking_slot_id' => 'Vald tid är inte längre tillgänglig. Välj en annan tid.',
                 ]);
             }
 
-            return Booking::create([
+            $booking = Booking::create([
                 'service_id' => $service->id,
+                'booking_slot_id' => $slot->id,
                 'booking_type' => 'window_cleaning',
                 'booking_date' => $bookingDate,
                 'time_from' => $timeFrom->format('H:i:s'),
                 'time_to' => $timeTo->format('H:i:s'),
-
                 'customer_name' => $validated['customer_name'],
                 'personnummer' => $validated['personnummer'],
                 'personnummer_last4' => $personnummerLast4,
@@ -142,18 +136,15 @@ class WindowCleaningBookingController extends Controller
                 'postcode' => $validated['postcode'],
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
-
                 'sqm' => (int) $validated['window_count'],
                 'window_count' => (int) $validated['window_count'],
                 'cleaning_scope' => $validated['cleaning_scope'],
                 'quoted_price' => $quotedPrice,
-
                 'addons' => $addons->map(fn ($addon) => [
                     'id' => $addon->id,
                     'name' => $addon->name,
                     'price' => (int) $addon->price,
                 ])->values()->all(),
-
                 'calculator_summary' => json_encode([
                     'service' => $service->name,
                     'window_count' => (int) $validated['window_count'],
@@ -163,12 +154,20 @@ class WindowCleaningBookingController extends Controller
                     'scope_adjusted_base_price' => $scopeAdjustedBasePrice,
                     'addons_total' => $addonsTotal,
                     'quoted_price' => $quotedPrice,
+                    'booking_date' => $bookingDate,
+                    'time_from' => $timeFrom->format('H:i'),
+                    'time_to' => $timeTo->format('H:i'),
                     'addons' => $addons->pluck('name')->values()->all(),
                     'message' => $validated['message'] ?? null,
                 ], JSON_UNESCAPED_UNICODE),
-
                 'status' => 'new',
             ]);
+
+            $slot->update([
+                'is_booked' => true,
+            ]);
+
+            return $booking;
         });
 
         $siteSettings = SiteSetting::query()->latest()->first();

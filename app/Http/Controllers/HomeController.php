@@ -6,13 +6,13 @@ use App\Models\Faq;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use Illuminate\Support\Collection;
 
 class HomeController extends Controller
 {
     public function index()
     {
         $siteSettings = SiteSetting::query()->latest()->first();
-
         $services = $this->getActiveServices();
 
         $faqs = Faq::query()
@@ -59,7 +59,7 @@ class HomeController extends Controller
         ));
     }
 
-    private function getActiveServices()
+    private function getActiveServices(): Collection
     {
         return Service::query()
             ->where('is_active', true)
@@ -72,7 +72,7 @@ class HomeController extends Controller
             ->get();
     }
 
-    private function buildCalculatorData($services)
+    private function buildCalculatorData(Collection $services): array
     {
         return [
             'services' => $services->mapWithKeys(function ($service) {

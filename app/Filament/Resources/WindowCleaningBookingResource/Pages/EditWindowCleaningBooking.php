@@ -3,9 +3,10 @@
 namespace App\Filament\Resources\WindowCleaningBookingResource\Pages;
 
 use App\Filament\Resources\WindowCleaningBookingResource;
+use App\Models\BookingSlot;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class EditWindowCleaningBooking extends EditRecord
 {
@@ -39,28 +40,39 @@ class EditWindowCleaningBooking extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        $previousStatus = $record->status;
+        $nextStatus = $data['status'] ?? $record->status;
+
         $updateData = $data;
 
-        if (($data['status'] ?? null) === 'contacted' && empty($record->contacted_at)) {
+        if ($nextStatus === 'contacted' && empty($record->contacted_at)) {
             $updateData['contacted_at'] = now();
         }
 
-        if (($data['status'] ?? null) === 'done' && empty($record->done_at)) {
+        if ($nextStatus === 'done' && empty($record->done_at)) {
             $updateData['done_at'] = now();
         }
 
-        if (($data['status'] ?? null) !== 'done' && $record->done_at && ($data['status'] ?? null) !== 'done') {
+        if ($nextStatus !== 'done' && $record->done_at) {
             $updateData['done_at'] = null;
         }
 
         $record->update($updateData);
 
-        return $record;
+        if ($previousStatus !== 'cancelled' && $nextStatus === 'cancelled' && $record->booking_slot_id) {
+            BookingSlot::query()
+                ->whereKey($record->booking_slot_id)
+                ->update([
+                    'is_booked' => false,
+                ]);
+        }
+
+        return $record->refresh();
     }
 
     protected function getSavedNotificationTitle(): ?string
     {
-        return 'Booking updated';
+        return 'Fönsterputsning bokning uppdaterad';
     }
 
     private function prettyJson(mixed $value): string

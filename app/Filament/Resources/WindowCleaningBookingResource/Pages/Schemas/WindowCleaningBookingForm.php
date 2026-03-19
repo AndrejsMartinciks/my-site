@@ -19,41 +19,42 @@ class WindowCleaningBookingForm
                 ->persistTab()
                 ->id('window-cleaning-booking-tabs')
                 ->tabs([
-                    Tab::make('Customer')
+                    Tab::make('Kund')
                         ->schema([
-                            Section::make('Customer details')
+                            Section::make('Kunduppgifter')
                                 ->schema([
-                                    TextInput::make('customer_name')->label('Customer name')->disabled()->dehydrated(false),
-                                    TextInput::make('email')->label('Email')->disabled()->dehydrated(false),
-                                    TextInput::make('phone')->label('Phone')->disabled()->dehydrated(false),
-                                    TextInput::make('personnummer_last4')->label('Personnummer last 4')->disabled()->dehydrated(false),
-                                    TextInput::make('address')->label('Address')->disabled()->dehydrated(false),
-                                    TextInput::make('postcode')->label('Postcode')->disabled()->dehydrated(false),
+                                    TextInput::make('customer_name')->label('Namn')->disabled()->dehydrated(false),
+                                    TextInput::make('email')->label('E-post')->disabled()->dehydrated(false),
+                                    TextInput::make('phone')->label('Telefon')->disabled()->dehydrated(false),
+                                    TextInput::make('personnummer_last4')->label('Personnummer sista 4')->disabled()->dehydrated(false),
+                                    TextInput::make('address')->label('Adress')->disabled()->dehydrated(false),
+                                    TextInput::make('postcode')->label('Postnummer')->disabled()->dehydrated(false),
                                 ])
                                 ->columns(2),
                         ]),
 
-                    Tab::make('Booking')
+                    Tab::make('Bokning')
                         ->schema([
-                            Section::make('Booking details')
+                            Section::make('Bokningsdetaljer')
                                 ->schema([
-                                    TextInput::make('booking_date')->label('Booking date')->disabled()->dehydrated(false),
-                                    TextInput::make('time_from')->label('Time from')->disabled()->dehydrated(false),
-                                    TextInput::make('time_to')->label('Time to')->disabled()->dehydrated(false),
-                                    TextInput::make('window_count')->label('Window count')->disabled()->dehydrated(false),
-                                    TextInput::make('cleaning_scope')->label('Cleaning scope')->disabled()->dehydrated(false),
-                                    TextInput::make('sqm')->label('Stored sqm field')->disabled()->dehydrated(false),
-                                    TextInput::make('quoted_price')->label('Quoted price')->suffix(' kr')->disabled()->dehydrated(false),
+                                    TextInput::make('booking_date')->label('Datum')->disabled()->dehydrated(false),
+                                    TextInput::make('time_from')->label('Tid från')->disabled()->dehydrated(false),
+                                    TextInput::make('time_to')->label('Tid till')->disabled()->dehydrated(false),
+                                    TextInput::make('booking_slot_id')->label('Booking slot ID')->disabled()->dehydrated(false),
+                                    TextInput::make('window_count')->label('Antal fönster')->disabled()->dehydrated(false),
+                                    TextInput::make('cleaning_scope')->label('Typ av putsning')->disabled()->dehydrated(false),
+                                    TextInput::make('quoted_price')->label('Offertpris')->suffix(' kr')->disabled()->dehydrated(false),
+                                    TextInput::make('sqm')->label('Lagrad mängd (sqm-fältet)')->disabled()->dehydrated(false),
                                 ])
                                 ->columns(2),
                         ]),
 
-                    Tab::make('Calculation')
+                    Tab::make('Beräkning')
                         ->schema([
-                            Section::make('Selected addons')
+                            Section::make('Valda tillägg')
                                 ->schema([
                                     Textarea::make('addons')
-                                        ->label('Addons JSON')
+                                        ->label('Tillägg JSON')
                                         ->rows(10)
                                         ->disabled()
                                         ->dehydrated(false)
@@ -73,23 +74,23 @@ class WindowCleaningBookingForm
 
                     Tab::make('Status')
                         ->schema([
-                            Section::make('Booking status')
+                            Section::make('Bokningsstatus')
                                 ->schema([
                                     Select::make('status')
                                         ->label('Status')
                                         ->options([
-                                            'new' => 'New',
-                                            'contacted' => 'Contacted',
-                                            'confirmed' => 'Confirmed',
-                                            'in_progress' => 'In progress',
-                                            'done' => 'Done',
-                                            'cancelled' => 'Cancelled',
+                                            'new' => 'Ny',
+                                            'contacted' => 'Kontaktad',
+                                            'confirmed' => 'Bekräftad',
+                                            'in_progress' => 'Pågående',
+                                            'done' => 'Slutförd',
+                                            'cancelled' => 'Avbokad',
                                         ])
                                         ->required()
                                         ->native(false),
 
                                     Textarea::make('manager_note')
-                                        ->label('Manager note')
+                                        ->label('Intern anteckning')
                                         ->rows(8)
                                         ->columnSpanFull(),
                                 ])
