@@ -528,51 +528,51 @@
     </section>
 
     <section class="testimonials section">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Kundomdömen</span>
-      <h2>Vad våra kunder uppskattar</h2>
-      <p>
-        Några exempel på hur våra kunder beskriver samarbetet med Clean Source AB.
-      </p>
-    </div>
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Kundomdömen</span>
+          <h2>Vad våra kunder uppskattar</h2>
+          <p>
+            Några exempel på hur våra kunder beskriver samarbetet med Clean Source AB.
+          </p>
+        </div>
 
-    <div class="testimonial-grid">
-      @forelse($testimonials as $testimonial)
-        @php
-          $testimonialText = $testimonial->quote ?? $testimonial->content ?? $testimonial->comment ?? '';
-          $testimonialLocation = $testimonial->location ?? $testimonial->city ?? '';
-        @endphp
+        <div class="testimonial-grid">
+          @forelse($testimonials as $testimonial)
+            @php
+              $testimonialText = trim((string) ($testimonial->text ?? ''));
+              $testimonialLocation = trim((string) ($testimonial->city ?? ''));
+            @endphp
 
-        <article class="testimonial-card">
-          <div class="testimonial-card__icon">“</div>
+            <article class="testimonial-card">
+              <div class="testimonial-card__icon">“</div>
 
-          @if(!empty($testimonialText))
-            <p class="testimonial-card__text">"{{ $testimonialText }}"</p>
-          @else
-            <p class="testimonial-card__text">"Kundomdöme uppdateras snart."</p>
-          @endif
+              @if($testimonialText !== '')
+                <p class="testimonial-card__text">"{{ $testimonialText }}"</p>
+              @else
+                <p class="testimonial-card__text">"Kundomdöme uppdateras snart."</p>
+              @endif
 
-          <footer class="testimonial-card__footer">
-            <strong>{{ $testimonial->name }}</strong>
+              <footer class="testimonial-card__footer">
+                <strong>{{ $testimonial->name }}</strong>
 
-            @if(!empty($testimonialLocation))
-              <span>{{ $testimonialLocation }}</span>
-            @endif
-          </footer>
-        </article>
-      @empty
-        <article class="testimonial-card">
-          <div class="testimonial-card__icon">“</div>
-          <p class="testimonial-card__text">"Snabb återkoppling, trevligt bemötande och noggrant utförd städning."</p>
-          <footer class="testimonial-card__footer">
-            <strong>Kundomdömen uppdateras</strong>
-          </footer>
-        </article>
-      @endforelse
-    </div>
-  </div>
-</section>
+                @if($testimonialLocation !== '')
+                  <span>{{ $testimonialLocation }}</span>
+                @endif
+              </footer>
+            </article>
+          @empty
+            <article class="testimonial-card">
+              <div class="testimonial-card__icon">“</div>
+              <p class="testimonial-card__text">"Snabb återkoppling, trevligt bemötande och noggrant utförd städning."</p>
+              <footer class="testimonial-card__footer">
+                <strong>Kundomdömen uppdateras</strong>
+              </footer>
+            </article>
+          @endforelse
+        </div>
+      </div>
+    </section>
 
     <section class="contact section section-soft" id="contact">
   <div class="container contact-grid">
