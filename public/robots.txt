@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://example.com/sitemap.xml
+# Служебные разделы не нужны в индексе
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /password
+Disallow: /storage
+Disallow: /vendor
+Disallow: /_debugbar
+
+Sitemap: https://cleans.se/sitemap.xml
