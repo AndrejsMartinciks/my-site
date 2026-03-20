@@ -23,15 +23,44 @@
         }
 
         $relatedLinks = $menuGroups[$page['group']] ?? [];
+
+        $serviceSlug = request()->route('slug');
+        $serviceImageRelativePath = 'images/services/' . $serviceSlug . '.jpg';
+        $serviceSeoImage = file_exists(public_path($serviceImageRelativePath))
+            ? asset($serviceImageRelativePath)
+            : asset('images/logo.png');
+
+        $serviceSeoDescription = \Illuminate\Support\Str::limit(
+            \Illuminate\Support\Str::squish(
+                strip_tags($page['lead'] ?? ($page['title'] . ' i Stockholm från Clean Source AB.'))
+            ),
+            160,
+            ''
+        );
+
+        $breadcrumbGroupName = ($page['group'] ?? null) === 'company' ? 'Företag' : 'Privatpersoner';
     @endphp
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $page['title'] }} | {{ $companyName }}</title>
-    <meta name="description" content="{{ $page['lead'] }}">
-
-    <link rel="icon" href="{{ asset('images/favicon.ico') }}" sizes="any">
-    <link rel="icon" type="image/png" href="{{ asset('images/favicon-32x32.png') }}" sizes="32x32">
+    @include('partials.seo', [
+        'siteSettings' => $siteSettings ?? null,
+        'pageFaqs' => collect(),
+        'seo' => [
+            'title' => ($page['title'] ?? 'Tjänst') . ' | ' . ($siteSettings->company_name ?? 'Clean Source AB'),
+            'description' => $serviceSeoDescription,
+            'canonical' => url()->current(),
+            'image' => $serviceSeoImage,
+            'image_alt' => ($page['title'] ?? 'Tjänst') . ' i Stockholm',
+            'og_type' => 'website',
+            'schema_type' => 'service',
+            'service_name' => $page['title'] ?? 'Tjänst',
+            'service_type' => $page['title'] ?? 'Tjänst',
+            'breadcrumbs' => [
+                ['name' => 'Hem', 'url' => route('home')],
+                ['name' => $breadcrumbGroupName, 'url' => route('home') . '#services'],
+                ['name' => $page['title'] ?? 'Tjänst', 'url' => url()->current()],
+            ],
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

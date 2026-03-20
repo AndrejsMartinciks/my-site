@@ -68,15 +68,34 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php
+        $windowSeoImageRelativePath = 'images/window-cleaning.jpg';
+        $windowSeoImage = file_exists(public_path($windowSeoImageRelativePath))
+            ? asset($windowSeoImageRelativePath)
+            : asset('images/logo.png');
 
-    <title>{{ $service->name }} | {{ $companyName }}</title>
-    <meta name="description" content="Boka {{ mb_strtolower($service->name) }} online. Välj antal fönster, tillägg, datum och tid.">
+        $windowSeoDescription = 'Professionell fönsterputsning i Stockholm för hem och företag. Enkel bokning, tydliga priser och separat kalkylator hos Clean Source AB.';
+    @endphp
 
-    <link rel="icon" href="{{ asset('images/favicon.ico') }}" sizes="any">
-    <link rel="icon" type="image/png" href="{{ asset('images/favicon-32x32.png') }}" sizes="32x32">
+    @include('partials.seo', [
+        'siteSettings' => $siteSettings ?? null,
+        'pageFaqs' => collect(),
+        'seo' => [
+            'title' => ($service->name ?? 'Fönsterputsning') . ' i Stockholm | ' . ($companyName ?? 'Clean Source AB'),
+            'description' => $windowSeoDescription,
+            'canonical' => url()->current(),
+            'image' => $windowSeoImage,
+            'image_alt' => ($service->name ?? 'Fönsterputsning') . ' i Stockholm',
+            'og_type' => 'website',
+            'schema_type' => 'service',
+            'service_name' => $service->name ?? 'Fönsterputsning',
+            'service_type' => $service->name ?? 'Fönsterputsning',
+            'breadcrumbs' => [
+                ['name' => 'Hem', 'url' => route('home')],
+                ['name' => 'Fönsterputsning', 'url' => url()->current()],
+            ],
+        ],
+    ])
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,7 +103,7 @@
 
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}?v={{ filemtime(public_path('css/styles.css')) }}">
 
-    <style>
+<style>
         .wc-page {
             background: var(--bg);
         }

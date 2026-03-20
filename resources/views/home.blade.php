@@ -1,182 +1,172 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-  @php
+@php
+    use Illuminate\Support\Facades\Route;
     use Illuminate\Support\Str;
 
-    $companyName = $siteSettings->company_name ?? 'CleanS AB';
-    $phonePrimary = $siteSettings->phone_primary ?? '+46707413772';
-    $phoneSecondary = $siteSettings->phone_secondary ?? null;
-    $email = $siteSettings->email ?? 'info@cleansource.se';
-    $addressLine = trim(implode(', ', array_filter([
-        $siteSettings->address ?? 'Ångermannagatan 121',
-        trim(implode(' ', array_filter([
-            $siteSettings->postal_code ?? '162 64',
-            $siteSettings->city ?? 'Vällingby',
-        ]))),
-    ])));
-    $orgNumber = $siteSettings->org_number ?? '556988-2722';
+    $siteSettings = $siteSettings ?? null;
+    $services = $services ?? collect();
+    $faqs = $faqs ?? collect();
+    $testimonials = $testimonials ?? collect();
+    $calculatorData = $calculatorData ?? ['services' => []];
 
-    $bankgiro = $siteSettings->bankgiro ?? '585-4963';
-    $swish = $siteSettings->swish ?? '123 044 79 79';
+    if (!($services instanceof \Illuminate\Support\Collection)) {
+        $services = collect($services);
+    }
+
+    if (!($faqs instanceof \Illuminate\Support\Collection)) {
+        $faqs = collect($faqs);
+    }
+
+    if (!($testimonials instanceof \Illuminate\Support\Collection)) {
+        $testimonials = collect($testimonials);
+    }
+
+    $companyName = optional($siteSettings)->company_name ?: 'Clean Source AB';
+    $phonePrimary = optional($siteSettings)->phone_primary ?: '+46 70 741 37 72';
+    $phoneSecondary = optional($siteSettings)->phone_secondary ?: null;
+    $email = optional($siteSettings)->email ?: 'info@cleansource.se';
+
+    $addressStreet = optional($siteSettings)->address ?: 'Ångermannagatan 121';
+    $postalCode = optional($siteSettings)->postal_code ?: '162 64';
+    $city = optional($siteSettings)->city ?: 'Vällingby';
+    $serviceAreaName = optional($siteSettings)->service_area ?: 'Stockholm';
+
+    $addressLine = trim(implode(', ', array_filter([
+        $addressStreet,
+        trim(implode(' ', array_filter([$postalCode, $city]))),
+    ])));
+
+    $orgNumber = optional($siteSettings)->org_number ?: '556988-2722';
+    $bankgiro = optional($siteSettings)->bankgiro ?: '585-4963';
+    $swish = optional($siteSettings)->swish ?: '123 044 79 79';
+
     $facebookUrl = 'https://www.facebook.com/profile.php?id=61558309301151#';
     $instagramUrl = 'https://www.instagram.com/cleansource_ab';
     $recoUrl = 'https://www.reco.se/clean-source-ab';
 
-    $heroEyebrow = $siteSettings->hero_eyebrow ?? 'Städning för hem & företag i Stockholm';
-    $heroTitle = $siteSettings->hero_title ?? 'Trygg och noggrann städservice med tydlig bokning.';
-    $heroText = $siteSettings->hero_text ?? 'CleanS AB hjälper privatpersoner och företag i Stockholm med städning, fönsterputsning och flyttrelaterade tjänster. Tydliga priser, snabb återkoppling och flexibla upplägg.';
-    $heroPrimaryButtonText = $siteSettings->hero_primary_button_text ?? 'Räkna ut pris';
-    $heroSecondaryButtonText = $siteSettings->hero_secondary_button_text ?? 'Begär offert';
-
-    $heroPoints = array_values(array_filter([
-        $siteSettings->hero_point_1 ?? '50% RUT-avdrag direkt på fakturan',
-        $siteSettings->hero_point_2 ?? 'Ansvarsförsäkring och kvalitetssäkring',
-        $siteSettings->hero_point_3 ?? 'Flexibla tider i hela Stockholm',
-    ]));
-
-    $heroBadges = array_values(array_filter([
-        $siteSettings->hero_badge_1 ?? 'För hem & företag',
-        $siteSettings->hero_badge_2 ?? 'Tydliga priser',
-        $siteSettings->hero_badge_3 ?? 'Snabb återkoppling',
-    ]));
-
-    $trustEyebrow = $siteSettings->trust_eyebrow ?? 'Därför väljer kunder oss';
-    $trustTitle = $siteSettings->trust_title ?? 'En modern och trygg städpartner';
+    $trustEyebrow = optional($siteSettings)->trust_eyebrow ?: 'Därför väljer kunder oss';
+    $trustTitle = optional($siteSettings)->trust_title ?: 'En modern och trygg städpartner';
 
     $trustItems = [
         [
             'icon' => '✓',
-            'title' => $siteSettings->trust_item_1_title ?? 'Tryggt',
-            'text' => $siteSettings->trust_item_1_text ?? 'Vi arbetar med tydliga rutiner, ansvarsförsäkring och personlig kontakt genom hela processen.',
+            'title' => optional($siteSettings)->trust_item_1_title ?: 'Tryggt',
+            'text' => optional($siteSettings)->trust_item_1_text ?: 'Vi arbetar med tydliga rutiner, ansvarsförsäkring och personlig kontakt genom hela processen.',
         ],
         [
             'icon' => '★',
-            'title' => $siteSettings->trust_item_2_title ?? 'Kvalitet',
-            'text' => $siteSettings->trust_item_2_text ?? 'Vårt team arbetar noggrant och strukturerat för ett jämnt resultat i varje uppdrag.',
+            'title' => optional($siteSettings)->trust_item_2_title ?: 'Kvalitet',
+            'text' => optional($siteSettings)->trust_item_2_text ?: 'Vårt team arbetar noggrant och strukturerat för ett jämnt resultat i varje uppdrag.',
         ],
         [
             'icon' => '24',
-            'title' => $siteSettings->trust_item_3_title ?? 'Flexibelt',
-            'text' => $siteSettings->trust_item_3_text ?? 'Boka enstaka uppdrag eller återkommande städning — vi anpassar upplägget efter ditt behov.',
+            'title' => optional($siteSettings)->trust_item_3_title ?: 'Flexibelt',
+            'text' => optional($siteSettings)->trust_item_3_text ?: 'Boka enstaka uppdrag eller återkommande städning — vi anpassar upplägget efter ditt behov.',
         ],
         [
             'icon' => 'R',
-            'title' => $siteSettings->trust_item_4_title ?? 'RUT-avdrag',
-            'text' => $siteSettings->trust_item_4_text ?? 'Vi hjälper dig med korrekt underlag så att din hushållsnära tjänst blir enkel att hantera.',
+            'title' => optional($siteSettings)->trust_item_4_title ?: 'RUT-avdrag',
+            'text' => optional($siteSettings)->trust_item_4_text ?: 'Vi hjälper dig med korrekt underlag så att din hushållsnära tjänst blir enkel att hantera.',
         ],
     ];
 
-    $aboutEyebrow = $siteSettings->about_eyebrow ?? ('Om ' . $companyName);
-    $aboutTitle = $siteSettings->about_title ?? 'Städning med fokus på kvalitet, trygghet och enkel kommunikation';
-    $aboutText1 = $siteSettings->about_text_1 ?? 'Vi hjälper kunder i Stockholm med städtjänster för både hem och företag. Vår ambition är att göra bokning, kontakt och utförande så smidigt som möjligt.';
-    $aboutText2 = $siteSettings->about_text_2 ?? 'Med tydliga rutiner, ett vänligt bemötande och noggrant utförda uppdrag vill vi vara en pålitlig partner när du behöver professionell städning.';
-    $aboutCheckTitle = $siteSettings->about_check_title ?? 'Så arbetar vi';
+    $aboutEyebrow = optional($siteSettings)->about_eyebrow ?: ('Om ' . $companyName);
+    $aboutTitle = optional($siteSettings)->about_title ?: 'Städning med fokus på kvalitet, trygghet och enkel kommunikation';
+    $aboutText1 = optional($siteSettings)->about_text_1 ?: 'Vi hjälper kunder i Stockholm med städtjänster för både hem och företag. Vår ambition är att göra bokning, kontakt och utförande så smidigt som möjligt.';
+    $aboutText2 = optional($siteSettings)->about_text_2 ?: 'Med tydliga rutiner, ett vänligt bemötande och noggrant utförda uppdrag vill vi vara en pålitlig partner när du behöver professionell städning.';
+    $aboutCheckTitle = optional($siteSettings)->about_check_title ?: 'Så arbetar vi';
     $aboutChecks = array_values(array_filter([
-        $siteSettings->about_check_1 ?? 'Tydlig offert och snabb återkoppling',
-        $siteSettings->about_check_2 ?? 'Anpassade upplägg för privat & företag',
-        $siteSettings->about_check_3 ?? 'Noggrann planering inför varje uppdrag',
-        $siteSettings->about_check_4 ?? 'Enkel kontakt före, under och efter bokning',
+        optional($siteSettings)->about_check_1 ?: 'Tydlig offert och snabb återkoppling',
+        optional($siteSettings)->about_check_2 ?: 'Anpassade upplägg för privat & företag',
+        optional($siteSettings)->about_check_3 ?: 'Noggrann planering inför varje uppdrag',
+        optional($siteSettings)->about_check_4 ?: 'Enkel kontakt före, under och efter bokning',
     ]));
 
-    $rutEyebrow = $siteSettings->rut_eyebrow ?? 'RUT-avdrag för privatpersoner';
-    $rutTitle = $siteSettings->rut_title ?? 'Du betalar bara halva arbetskostnaden';
-    $rutText1 = $siteSettings->rut_text_1 ?? 'För många hushållsnära tjänster kan du använda RUT-avdrag, vilket innebär att arbetskostnaden reduceras direkt på fakturan.';
-    $rutText2 = $siteSettings->rut_text_2 ?? 'Vi arbetar med tydlig information kring bokning och pris så att du enkelt ser vad som gäller för din tjänst.';
+    $rutEyebrow = optional($siteSettings)->rut_eyebrow ?: 'RUT-avdrag för privatpersoner';
+    $rutTitle = optional($siteSettings)->rut_title ?: 'Du betalar bara halva arbetskostnaden';
+    $rutText1 = optional($siteSettings)->rut_text_1 ?: 'För många hushållsnära tjänster kan du använda RUT-avdrag, vilket innebär att arbetskostnaden reduceras direkt på fakturan.';
+    $rutText2 = optional($siteSettings)->rut_text_2 ?: 'Vi arbetar med tydlig information kring bokning och pris så att du enkelt ser vad som gäller för din tjänst.';
 
-    $footerText = $siteSettings->footer_text ?? 'Professionell städservice i Stockholm för privatpersoner och företag.';
-
-    $seoTitle = $siteSettings->seo_title ?? ($companyName . ' | Städning i Stockholm');
-    $seoDescription = $siteSettings->seo_description ?? 'Professionell hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning i Stockholm. Tydliga priser och snabb bokning.';
+    $footerText = optional($siteSettings)->footer_text ?: 'Professionell städservice i Stockholm för privatpersoner och företag.';
 
     $hemstadningService = $services->first(function ($service) {
-        return Str::lower($service->name) === 'hemstädning';
+        return Str::lower((string) ($service->name ?? '')) === 'hemstädning';
     });
 
     if (!$hemstadningService) {
         $hemstadningService = $services->first(function ($service) {
-            return $service->pricing_mode === 'frequency';
+            return ($service->pricing_mode ?? null) === 'frequency';
         });
     }
 
     $priceCards = collect();
 
-    if ($hemstadningService && $hemstadningService->pricing_mode === 'frequency') {
-        $priceCards = $hemstadningService->frequencies
+    if ($hemstadningService && ($hemstadningService->pricing_mode ?? null) === 'frequency' && isset($hemstadningService->frequencies)) {
+        $priceCards = collect($hemstadningService->frequencies)
             ->map(function ($frequency) {
-                $lowestRange = $frequency->priceRanges->sortBy('price')->first();
+                $priceRanges = collect($frequency->priceRanges ?? [])->sortBy('price');
+                $lowestRange = $priceRanges->first();
 
                 return [
-                    'label' => $frequency->name,
-                    'price' => $lowestRange?->price,
+                    'label' => $frequency->name ?? 'Prisnivå',
+                    'price' => $lowestRange->price ?? null,
                 ];
             })
             ->filter(fn ($item) => !is_null($item['price']))
             ->values();
     }
 
-    $serviceIntro = $services->take(6);
-    $displayTestimonials = $testimonials->take(6);
     $displayFaqs = $faqs->take(8);
+    $displayTestimonials = $testimonials->take(6);
+
+    $safeRoute = function (string $name, $parameters = [], string $fallback = '#') {
+        return Route::has($name) ? route($name, $parameters) : $fallback;
+    };
 
     $privateMenu = [
-    ['label' => 'Hemstädning', 'href' => route('services.private.show', 'hemstadning')],
-    ['label' => 'Flyttstädning', 'href' => route('services.private.show', 'flyttstadning')],
-    ['label' => 'Fönsterputsning', 'href' => route('window-cleaning')],
-    ['label' => 'Byggstädning', 'href' => route('services.private.show', 'byggstadning')],
-    ['label' => 'Storstädning', 'href' => route('services.private.show', 'storstadning')],
-    ['label' => 'Visningsstädning', 'href' => route('services.private.show', 'visningsstadning')],
+        ['label' => 'Hemstädning', 'href' => $safeRoute('services.private.show', 'hemstadning', '#services')],
+        ['label' => 'Flyttstädning', 'href' => $safeRoute('services.private.show', 'flyttstadning', '#services')],
+        ['label' => 'Fönsterputsning', 'href' => $safeRoute('window-cleaning', [], '#services')],
+        ['label' => 'Byggstädning', 'href' => $safeRoute('services.private.show', 'byggstadning', '#services')],
+        ['label' => 'Storstädning', 'href' => $safeRoute('services.private.show', 'storstadning', '#services')],
+        ['label' => 'Visningsstädning', 'href' => $safeRoute('services.private.show', 'visningsstadning', '#services')],
     ];
 
     $companyMenu = [
-    ['label' => 'Butiksstädning', 'href' => route('services.company.show', 'butiksstadning')],
-    ['label' => 'Flyttstädning', 'href' => route('services.company.show', 'flyttstadning')],
-    ['label' => 'Storstädning', 'href' => route('services.company.show', 'storstadning')],
-    ['label' => 'Fönsterputsning', 'href' => route('services.company.show', 'fonsterputsning')],
-    ['label' => 'Byggstädning', 'href' => route('services.company.show', 'byggstadning')],
-    ['label' => 'Kontorsstädning', 'href' => route('services.company.show', 'kontorsstadning')],
+        ['label' => 'Butiksstädning', 'href' => $safeRoute('services.company.show', 'butiksstadning', '#services')],
+        ['label' => 'Flyttstädning', 'href' => $safeRoute('services.company.show', 'flyttstadning', '#services')],
+        ['label' => 'Storstädning', 'href' => $safeRoute('services.company.show', 'storstadning', '#services')],
+        ['label' => 'Fönsterputsning', 'href' => $safeRoute('services.company.show', 'fonsterputsning', '#services')],
+        ['label' => 'Byggstädning', 'href' => $safeRoute('services.company.show', 'byggstadning', '#services')],
+        ['label' => 'Kontorsstädning', 'href' => $safeRoute('services.company.show', 'kontorsstadning', '#services')],
     ];
-  @endphp
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="csrf-token" content="{{ csrf_token() }}" />
-
-  <title>{{ $seoTitle }}</title>
-  <meta name="description" content="{{ $seoDescription }}" />
-  <meta name="theme-color" content="#1f2b4d" />
-  <link rel="canonical" href="{{ url('/') }}">
-
-  <link rel="icon" href="{{ asset('images/favicon.ico') }}" sizes="any">
-  <link rel="icon" type="image/png" href="{{ asset('images/favicon-32x32.png') }}" sizes="32x32">
+    $cssPath = public_path('css/styles.css');
+    $jsPath = public_path('js/script.js');
+    $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : time();
+    $jsVersion = file_exists($jsPath) ? filemtime($jsPath) : time();
+@endphp
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  @include('partials.seo', [
+    'siteSettings' => $siteSettings,
+    'pageFaqs' => $displayFaqs,
+    'seo' => [
+      'title' => optional($siteSettings)->seo_title ?: ($companyName . ' | Städning i Stockholm'),
+      'description' => optional($siteSettings)->seo_description ?: 'Professionell hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning i Stockholm. Tydliga priser och snabb bokning.',
+      'canonical' => url()->current(),
+      'image' => asset('images/logo.png'),
+      'image_alt' => $companyName . ' logotyp',
+      'og_type' => 'website',
+      'theme_color' => '#1f2b4d',
+    ],
+  ])
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{{ asset('css/styles.css') }}?v={{ filemtime(public_path('css/styles.css')) }}">
-
-  @verbatim
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Clean Source AB",
-    "image": "https://cleans.se/favicon-32x32.png",
-    "description": "Städföretag i Stockholm med hemstädning, flyttstädning, byggstädning, fönsterputsning och storstädning.",
-    "telephone": "+46707413772",
-    "email": "info@cleansource.se",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Ångermannagatan 121",
-      "addressLocality": "Vällingby",
-      "postalCode": "162 64",
-      "addressCountry": "SE"
-    },
-    "areaServed": "Stockholm"
-  }
-  </script>
-  @endverbatim
+  <link rel="stylesheet" href="{{ asset('css/styles.css') }}?v={{ $cssVersion }}">
 </head>
 <body>
   <div class="cookie-banner" id="cookie-banner" hidden>
@@ -267,7 +257,7 @@
           <span class="eyebrow">Hemstädning • Flyttstädning • Fönsterputs</span>
           <h1>Rent hemma, mer tid över för livet.</h1>
           <p class="lead">
-            Clean Source AB hjälper hushåll i Stockholm med noggrann städning, tydliga
+            {{ $companyName }} hjälper hushåll i Stockholm med noggrann städning, tydliga
             priser och snabb återkoppling.
           </p>
 
@@ -292,7 +282,7 @@
           </p>
 
           <div class="hero-window-side__actions">
-            <a href="{{ route('window-cleaning') }}" class="btn btn-primary">
+            <a href="{{ $safeRoute('window-cleaning', [], '#services') }}" class="btn btn-primary">
               Gå till Fönsterputsning
             </a>
             <a href="#contact" class="btn btn-secondary">
@@ -307,7 +297,7 @@
           <div class="hero-card hero-card--wide">
             <div class="stat-grid stat-grid--horizontal">
               <article>
-                <strong>6+</strong>
+                <strong>{{ $services->count() ?: '6+' }}</strong>
                 <span>aktiva tjänster</span>
               </article>
 
@@ -317,12 +307,18 @@
               </article>
 
               <article>
-                <strong>777 kr</strong>
+                <strong>
+                  @if($priceCards->isNotEmpty())
+                    {{ $priceCards->min('price') }} kr
+                  @else
+                    777 kr
+                  @endif
+                </strong>
                 <span>från / timme efter RUT</span>
               </article>
 
               <article>
-                <strong>3+</strong>
+                <strong>{{ $testimonials->count() ?: '3+' }}</strong>
                 <span>kundomdömen</span>
               </article>
             </div>
@@ -336,8 +332,6 @@
         </div>
       </div>
     </section>
-
-
 
     @include('partials.calculator')
 
@@ -361,68 +355,68 @@
     </section>
 
     <section class="services section" id="services">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Våra tjänster</span>
-      <h2>Städning för privatpersoner och företag</h2>
-      <p>
-        Vi erbjuder professionella städtjänster i Stockholm med tydliga upplägg,
-        flexibel planering och snabb återkoppling.
-      </p>
-    </div>
-
-    <div class="service-grid">
-      @forelse($services->take(6) as $service)
-        <article class="service-card">
-          <h3>{{ $service->name }}</h3>
-
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Våra tjänster</span>
+          <h2>Städning för privatpersoner och företag</h2>
           <p>
-            {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
+            Vi erbjuder professionella städtjänster i Stockholm med tydliga upplägg,
+            flexibel planering och snabb återkoppling.
           </p>
+        </div>
 
-          <ul>
-            @if($service->pricing_mode === 'frequency')
-              <li>Flexibla intervaller och återkommande upplägg</li>
-              <li>Pris beräknas efter storlek och frekvens</li>
-              <li>Passar för löpande hemstädning</li>
-            @else
-              <li>Tydliga prisintervall utifrån bostadens storlek</li>
-              <li>Kan kombineras med tilläggstjänster</li>
-              <li>Snabb offert och enkel bokning</li>
-            @endif
-          </ul>
+        <div class="service-grid">
+          @forelse($services->take(6) as $service)
+            <article class="service-card">
+              <h3>{{ $service->name }}</h3>
 
-          @if($service->slug === 'fonsterputsning')
-            <a href="{{ route('window-cleaning') }}" class="btn btn-secondary btn-sm">
-              Till Fönsterputsning
-            </a>
-          @elseif($service->slug === 'hemstadning')
-            <a href="{{ route('services.private.show', 'hemstadning') }}" class="btn btn-secondary btn-sm">
-              Läs mer
-            </a>
-          @elseif($service->slug === 'flyttstadning')
-            <a href="{{ route('services.private.show', 'flyttstadning') }}" class="btn btn-secondary btn-sm">
-              Läs mer
-            </a>
-          @elseif($service->slug === 'storstadning')
-            <a href="{{ route('services.private.show', 'storstadning') }}" class="btn btn-secondary btn-sm">
-              Läs mer
-            </a>
-          @elseif($service->slug === 'visningsstadning')
-            <a href="{{ route('services.private.show', 'visningsstadning') }}" class="btn btn-secondary btn-sm">
-              Läs mer
-            </a>
-          @endif
-        </article>
-      @empty
-        <article class="service-card">
-          <h3>Tjänster uppdateras</h3>
-          <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
-        </article>
-      @endforelse
-    </div>
-  </div>
-</section>
+              <p>
+                {{ $service->description ?: 'Professionell städservice anpassad efter dina behov och önskemål.' }}
+              </p>
+
+              <ul>
+                @if(($service->pricing_mode ?? null) === 'frequency')
+                  <li>Flexibla intervaller och återkommande upplägg</li>
+                  <li>Pris beräknas efter storlek och frekvens</li>
+                  <li>Passar för löpande hemstädning</li>
+                @else
+                  <li>Tydliga prisintervall utifrån bostadens storlek</li>
+                  <li>Kan kombineras med tilläggstjänster</li>
+                  <li>Snabb offert och enkel bokning</li>
+                @endif
+              </ul>
+
+              @if(($service->slug ?? null) === 'fonsterputsning')
+                <a href="{{ $safeRoute('window-cleaning', [], '#contact') }}" class="btn btn-secondary btn-sm">
+                  Till Fönsterputsning
+                </a>
+              @elseif(($service->slug ?? null) === 'hemstadning')
+                <a href="{{ $safeRoute('services.private.show', 'hemstadning', '#contact') }}" class="btn btn-secondary btn-sm">
+                  Läs mer
+                </a>
+              @elseif(($service->slug ?? null) === 'flyttstadning')
+                <a href="{{ $safeRoute('services.private.show', 'flyttstadning', '#contact') }}" class="btn btn-secondary btn-sm">
+                  Läs mer
+                </a>
+              @elseif(($service->slug ?? null) === 'storstadning')
+                <a href="{{ $safeRoute('services.private.show', 'storstadning', '#contact') }}" class="btn btn-secondary btn-sm">
+                  Läs mer
+                </a>
+              @elseif(($service->slug ?? null) === 'visningsstadning')
+                <a href="{{ $safeRoute('services.private.show', 'visningsstadning', '#contact') }}" class="btn btn-secondary btn-sm">
+                  Läs mer
+                </a>
+              @endif
+            </article>
+          @empty
+            <article class="service-card">
+              <h3>Tjänster uppdateras</h3>
+              <p>Inga aktiva tjänster hittades just nu. Lägg till eller aktivera tjänster i adminpanelen.</p>
+            </article>
+          @endforelse
+        </div>
+      </div>
+    </section>
 
     <section class="reco-section section section-soft">
       <div class="container reco-shell">
@@ -437,21 +431,21 @@
         </div>
 
         <div class="reco-card">
-          <h3>Clean Source AB på Reco</h3>
+          <h3>{{ $companyName }} på Reco</h3>
           <p>Läs recensioner och omdömen direkt på vår profilsida.</p>
 
-            <div class="reco-widget-embed">
-              <iframe src="https://widget.reco.se/v2/venues/4029265/horizontal/xlarge?inverted=false&border=true&lang=sv" 
-                title="CleanS AB - Omdömen på Reco" 
-                height="225" 
-                style="width:100%;border:0;display:block;overflow:hidden;" data-reactroot>
-              </iframe>
-            </div>
+          <div class="reco-widget-embed">
+            <iframe
+              src="https://widget.reco.se/v2/venues/4029265/horizontal/xlarge?inverted=false&border=true&lang=sv"
+              title="{{ $companyName }} - Omdömen på Reco"
+              height="225"
+              style="width:100%;border:0;display:block;overflow:hidden;"
+              data-reactroot>
+            </iframe>
+          </div>
         </div>
       </div>
     </section>
-
-    
 
     <section class="pricing section section-soft" id="pricing">
       <div class="container pricing-grid">
@@ -540,12 +534,12 @@
           <span class="eyebrow">Kundomdömen</span>
           <h2>Vad våra kunder uppskattar</h2>
           <p>
-            Några exempel på hur våra kunder beskriver samarbetet med Clean Source AB.
+            Några exempel på hur våra kunder beskriver samarbetet med {{ $companyName }}.
           </p>
         </div>
 
         <div class="testimonial-grid">
-          @forelse($testimonials as $testimonial)
+          @forelse($displayTestimonials as $testimonial)
             @php
               $testimonialText = trim((string) ($testimonial->text ?? ''));
               $testimonialLocation = trim((string) ($testimonial->city ?? ''));
@@ -582,124 +576,124 @@
     </section>
 
     <section class="contact section section-soft" id="contact">
-  <div class="container contact-grid">
-    <div>
-      <span class="eyebrow">Boka eller bli uppringd</span>
-      <h2>Skicka en förfrågan så kontaktar vi dig</h2>
-      <p>
-        Fyll i formuläret så återkommer vi med offert eller förslag på upplägg.
-        Vi hjälper både privatpersoner och företag i Stockholm med tydlig planering
-        och snabb återkoppling.
-      </p>
+      <div class="container contact-grid">
+        <div>
+          <span class="eyebrow">Boka eller bli uppringd</span>
+          <h2>Skicka en förfrågan så kontaktar vi dig</h2>
+          <p>
+            Fyll i formuläret så återkommer vi med offert eller förslag på upplägg.
+            Vi hjälper både privatpersoner och företag i Stockholm med tydlig planering
+            och snabb återkoppling.
+          </p>
 
-      <div class="contact-cards">
-        <article>
-          <strong>Mobil</strong>
-          <a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a>
-        </article>
+          <div class="contact-cards">
+            <article>
+              <strong>Mobil</strong>
+              <a href="tel:{{ preg_replace('/\s+/', '', $phonePrimary) }}">{{ $phonePrimary }}</a>
+            </article>
 
-        @if($phoneSecondary)
-          <article>
-            <strong>Växel</strong>
-            <a href="tel:{{ preg_replace('/\s+/', '', $phoneSecondary) }}">{{ $phoneSecondary }}</a>
-          </article>
-        @endif
+            @if($phoneSecondary)
+              <article>
+                <strong>Växel</strong>
+                <a href="tel:{{ preg_replace('/\s+/', '', $phoneSecondary) }}">{{ $phoneSecondary }}</a>
+              </article>
+            @endif
 
-        <article>
-          <strong>E-post</strong>
-          <a href="mailto:{{ $email }}">{{ $email }}</a>
-        </article>
+            <article>
+              <strong>E-post</strong>
+              <a href="mailto:{{ $email }}">{{ $email }}</a>
+            </article>
 
-        <article>
-          <strong>Adress</strong>
-          <p>{{ $addressLine }}</p>
-        </article>
-      </div>
-    </div>
-
-    <form class="booking-form" id="booking-form" method="POST" action="{{ route('contact.store') }}" novalidate>
-      @csrf
-
-      <input type="hidden" name="calculator_summary" id="calculator-summary-input">
-      <input type="hidden" name="booking_slot_id" id="booking-slot-id-input">
-      <input type="hidden" name="booking_date" id="booking-date-input">
-      <input type="hidden" name="booking_time_from" id="booking-time-from-input">
-      <input type="hidden" name="booking_time_to" id="booking-time-to-input">
-
-      <div class="form-row">
-        <label>
-          Namn
-          <input type="text" name="name" autocomplete="name" required />
-        </label>
-
-        <label>
-          E-post
-          <input type="email" name="email" autocomplete="email" required />
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          Telefon
-          <input type="tel" name="phone" autocomplete="tel" required />
-        </label>
-
-        <label>
-          Tjänst
-          <select name="service" id="contact-service" required>
-            <option value="">Välj tjänst</option>
-            @foreach($services as $service)
-              <option value="{{ $service->name }}">{{ $service->name }}</option>
-            @endforeach
-          </select>
-        </label>
-      </div>
-
-      <div id="booking-customer-fields" hidden>
-        <div class="form-row">
-          <label>
-            Personnummer
-            <input
-              type="text"
-              name="personnummer"
-              id="booking-personnummer"
-              inputmode="numeric"
-              autocomplete="off"
-              placeholder="YYYYMMDDXXXX eller YYMMDDXXXX"
-            />
-          </label>
-
-          <label>
-            Adress
-            <input
-              type="text"
-              name="address"
-              id="booking-address"
-              autocomplete="street-address"
-              placeholder="Gatuadress och lägenhetsnummer"
-            />
-          </label>
+            <article>
+              <strong>Adress</strong>
+              <p>{{ $addressLine }}</p>
+            </article>
+          </div>
         </div>
 
-        <p class="form-note">
-          För bokning med RUT-avdrag behöver vi personnummer och adress.
-        </p>
+        <form class="booking-form" id="booking-form" method="POST" action="{{ route('contact.store') }}" novalidate>
+          @csrf
+
+          <input type="hidden" name="calculator_summary" id="calculator-summary-input">
+          <input type="hidden" name="booking_slot_id" id="booking-slot-id-input">
+          <input type="hidden" name="booking_date" id="booking-date-input">
+          <input type="hidden" name="booking_time_from" id="booking-time-from-input">
+          <input type="hidden" name="booking_time_to" id="booking-time-to-input">
+
+          <div class="form-row">
+            <label>
+              Namn
+              <input type="text" name="name" autocomplete="name" required />
+            </label>
+
+            <label>
+              E-post
+              <input type="email" name="email" autocomplete="email" required />
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>
+              Telefon
+              <input type="tel" name="phone" autocomplete="tel" required />
+            </label>
+
+            <label>
+              Tjänst
+              <select name="service" id="contact-service" required>
+                <option value="">Välj tjänst</option>
+                @foreach($services as $service)
+                  <option value="{{ $service->name }}">{{ $service->name }}</option>
+                @endforeach
+              </select>
+            </label>
+          </div>
+
+          <div id="booking-customer-fields" hidden>
+            <div class="form-row">
+              <label>
+                Personnummer
+                <input
+                  type="text"
+                  name="personnummer"
+                  id="booking-personnummer"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="YYYYMMDDXXXX eller YYMMDDXXXX"
+                />
+              </label>
+
+              <label>
+                Adress
+                <input
+                  type="text"
+                  name="address"
+                  id="booking-address"
+                  autocomplete="street-address"
+                  placeholder="Gatuadress och lägenhetsnummer"
+                />
+              </label>
+            </div>
+
+            <p class="form-note">
+              För bokning med RUT-avdrag behöver vi personnummer och adress.
+            </p>
+          </div>
+
+          <label>
+            Meddelande
+            <textarea
+              name="message"
+              rows="5"
+              placeholder="Beskriv bostad, lokal eller vad du behöver hjälp med."
+            ></textarea>
+          </label>
+
+          <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
+          <p class="form-status" id="form-status" aria-live="polite"></p>
+        </form>
       </div>
-
-      <label>
-        Meddelande
-        <textarea
-          name="message"
-          rows="5"
-          placeholder="Beskriv bostad, lokal eller vad du behöver hjälp med."
-        ></textarea>
-      </label>
-
-      <button type="submit" class="btn btn-primary full">Skicka förfrågan</button>
-      <p class="form-status" id="form-status" aria-live="polite"></p>
-    </form>
-  </div>
-</section>
+    </section>
 
     <section class="faq section" id="faq">
       <div class="container">
@@ -799,6 +793,6 @@
   <script>
     window.calcData = @json($calculatorData);
   </script>
-  <script src="{{ asset('js/script.js') }}?v={{ filemtime(public_path('js/script.js')) }}"></script>
+  <script src="{{ asset('js/script.js') }}?v={{ $jsVersion }}"></script>
 </body>
 </html>
