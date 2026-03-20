@@ -4,7 +4,7 @@
   @php
     use Illuminate\Support\Str;
 
-    $companyName = $siteSettings->company_name ?? 'Clean Source AB';
+    $companyName = $siteSettings->company_name ?? 'CleanS AB';
     $phonePrimary = $siteSettings->phone_primary ?? '+46707413772';
     $phoneSecondary = $siteSettings->phone_secondary ?? null;
     $email = $siteSettings->email ?? 'info@cleansource.se';
@@ -17,15 +17,15 @@
     ])));
     $orgNumber = $siteSettings->org_number ?? '556988-2722';
 
-    $bankgiro = $siteSettings->bankgiro ?? '540-1054';
-    $swish = $siteSettings->swish ?? '1234591558';
+    $bankgiro = $siteSettings->bankgiro ?? '585-4963';
+    $swish = $siteSettings->swish ?? '123 044 79 79';
     $facebookUrl = 'https://www.facebook.com/profile.php?id=61558309301151#';
     $instagramUrl = 'https://www.instagram.com/cleansource_ab';
     $recoUrl = 'https://www.reco.se/clean-source-ab';
 
     $heroEyebrow = $siteSettings->hero_eyebrow ?? 'Städning för hem & företag i Stockholm';
     $heroTitle = $siteSettings->hero_title ?? 'Trygg och noggrann städservice med tydlig bokning.';
-    $heroText = $siteSettings->hero_text ?? 'Clean Source AB hjälper privatpersoner och företag i Stockholm med städning, fönsterputsning och flyttrelaterade tjänster. Tydliga priser, snabb återkoppling och flexibla upplägg.';
+    $heroText = $siteSettings->hero_text ?? 'CleanS AB hjälper privatpersoner och företag i Stockholm med städning, fönsterputsning och flyttrelaterade tjänster. Tydliga priser, snabb återkoppling och flexibla upplägg.';
     $heroPrimaryButtonText = $siteSettings->hero_primary_button_text ?? 'Räkna ut pris';
     $heroSecondaryButtonText = $siteSettings->hero_secondary_button_text ?? 'Begär offert';
 
@@ -262,58 +262,82 @@
 
   <main id="main">
     <section class="hero section">
-  <div class="container hero-grid">
-    <div class="hero-copy">
-      <span class="eyebrow">{{ $heroEyebrow }}</span>
-      <h1>{{ $heroTitle }}</h1>
-      <p class="lead">{{ $heroText }}</p>
+      <div class="container hero-layout">
+        <div class="hero-main">
+          <span class="eyebrow">Hemstädning • Flyttstädning • Fönsterputs</span>
+          <h1>Rent hemma, mer tid över för livet.</h1>
+          <p class="lead">
+            Clean Source AB hjälper hushåll i Stockholm med noggrann städning, tydliga
+            priser och snabb återkoppling.
+          </p>
 
-      <div class="hero-actions">
-        <a href="#calculator" class="btn btn-primary">{{ $heroPrimaryButtonText }}</a>
-        <a href="#contact" class="btn btn-secondary">{{ $heroSecondaryButtonText }}</a>
+          <div class="hero-actions">
+            <a href="#calculator" class="btn btn-primary">Få kostnadsfri offert</a>
+            <a href="#services" class="btn btn-secondary">Se våra tjänster</a>
+          </div>
+
+          <ul class="hero-points" aria-label="Våra styrkor">
+            <li>50% RUT-avdrag direkt på fakturan</li>
+            <li>Ansvarsförsäkring och kvalitetssäkring</li>
+            <li>Flexibla tider i hela Stockholm</li>
+          </ul>
+        </div>
+
+        <aside class="hero-window-side" aria-label="Fönsterputsning">
+          <span class="hero-window-side__label">Fönsterputsning</span>
+          <h2 class="hero-window-side__title">Boka professionell fönsterputsning online</h2>
+          <p class="hero-window-side__text">
+            Behöver du hjälp med rena fönster hemma eller inför en flytt?
+            Gå till vår separata sida för Fönsterputsning med egen bokning och prislogik.
+          </p>
+
+          <div class="hero-window-side__actions">
+            <a href="{{ route('window-cleaning') }}" class="btn btn-primary">
+              Gå till Fönsterputsning
+            </a>
+            <a href="#contact" class="btn btn-secondary">
+              Kontakta oss först
+            </a>
+          </div>
+        </aside>
       </div>
 
-      <ul class="hero-points" aria-label="Våra styrkor">
-        @foreach($heroPoints as $point)
-          <li>{{ $point }}</li>
-        @endforeach
-      </ul>
-    </div>
+      <div class="container">
+        <div class="hero-meta">
+          <div class="hero-card hero-card--wide">
+            <div class="stat-grid stat-grid--horizontal">
+              <article>
+                <strong>6+</strong>
+                <span>aktiva tjänster</span>
+              </article>
 
-    <aside class="hero-card" aria-label="Snabb info">
-      <div class="stat-grid">
-        <article>
-          <strong>{{ $services->count() }}+</strong>
-          <span>aktiva tjänster</span>
-        </article>
-        <article>
-          <strong>24h</strong>
-          <span>svarstid på vardagar</span>
-        </article>
-        <article>
-          <strong>
-            @if($priceCards->isNotEmpty())
-              {{ $priceCards->min('price') }} kr
-            @else
-              249 kr
-            @endif
-          </strong>
-          <span>från / timme efter RUT</span>
-        </article>
-        <article>
-          <strong>{{ max($displayTestimonials->count(), 3) }}+</strong>
-          <span>kundomdömen</span>
-        </article>
-      </div>
+              <article>
+                <strong>24h</strong>
+                <span>svarstid på vardagar</span>
+              </article>
 
-      <div class="hero-badge-list">
-        @foreach($heroBadges as $badge)
-          <span>{{ $badge }}</span>
-        @endforeach
+              <article>
+                <strong>777 kr</strong>
+                <span>från / timme efter RUT</span>
+              </article>
+
+              <article>
+                <strong>3+</strong>
+                <span>kundomdömen</span>
+              </article>
+            </div>
+
+            <div class="hero-badge-list hero-badge-list--bottom">
+              <span>För hem &amp; företag</span>
+              <span>Tydliga priser</span>
+              <span>Snabb återkoppling</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </aside>
-  </div>
-</section>
+    </section>
+
+
 
     @include('partials.calculator')
 
@@ -401,50 +425,33 @@
 </section>
 
     <section class="reco-section section section-soft">
-  <div class="container reco-shell">
-    <div class="reco-copy">
-      <span class="eyebrow">Reco</span>
-      <h2>Se vad våra kunder säger om oss</h2>
-      <p>
-        Transparens och förtroende är viktiga delar i vårt arbete.
-        På vår Reco-sida kan du läsa omdömen och få en bättre bild av hur
-        kunder upplever vårt bemötande, vår kvalitet och vår service.
-      </p>
-    </div>
+      <div class="container reco-shell">
+        <div class="reco-copy">
+          <span class="eyebrow">Reco</span>
+          <h2>Se vad våra kunder säger om oss</h2>
+          <p>
+            Transparens och förtroende är viktiga delar i vårt arbete.
+            På vår Reco-sida kan du läsa omdömen och få en bättre bild av hur
+            kunder upplever vårt bemötande, vår kvalitet och vår service.
+          </p>
+        </div>
 
-    <div class="reco-card">
-      <strong>Clean Source AB på Reco</strong>
-      <p>Läs recensioner och omdömen direkt på vår profilsida.</p>
-      <a href="{{ $recoUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-        Öppna Reco
-      </a>
-    </div>
-  </div>
-</section>
+        <div class="reco-card">
+          <h3>Clean Source AB på Reco</h3>
+          <p>Läs recensioner och omdömen direkt på vår profilsida.</p>
 
-    <section class="section section-highlight">
-      <div class="container">
-        <div class="promo-panel">
-          <div>
-            <span class="eyebrow">Fönsterputsning</span>
-            <h2>Boka professionell fönsterputsning online</h2>
-            <p>
-              Behöver du hjälp med rena fönster hemma eller inför en flytt?
-              Gå till vår separata sida för Fönsterputsning med egen bokning och prislogik.
-            </p>
-          </div>
-
-          <div class="hero-actions">
-            <a href="{{ route('window-cleaning') }}" class="btn btn-primary">
-              Gå till Fönsterputsning
-            </a>
-            <a href="#contact" class="btn btn-secondary">
-              Kontakta oss först
-            </a>
-          </div>
+            <div class="reco-widget-embed">
+              <iframe src="https://widget.reco.se/v2/venues/4029265/horizontal/xlarge?inverted=false&border=true&lang=sv" 
+                title="CleanS AB - Omdömen på Reco" 
+                height="225" 
+                style="width:100%;border:0;display:block;overflow:hidden;" data-reactroot>
+              </iframe>
+            </div>
         </div>
       </div>
     </section>
+
+    
 
     <section class="pricing section section-soft" id="pricing">
       <div class="container pricing-grid">
