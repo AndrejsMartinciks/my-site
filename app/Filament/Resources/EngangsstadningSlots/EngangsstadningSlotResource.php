@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\BookingSlots;
+namespace App\Filament\Resources\EngangsstadningSlots;
 
-use App\Filament\Resources\BookingSlots\Pages\CreateBookingSlot;
-use App\Filament\Resources\BookingSlots\Pages\EditBookingSlot;
-use App\Filament\Resources\BookingSlots\Pages\ListBookingSlots;
+use App\Filament\Resources\EngangsstadningSlots\Pages\CreateEngangsstadningSlot;
+use App\Filament\Resources\EngangsstadningSlots\Pages\EditEngangsstadningSlot;
+use App\Filament\Resources\EngangsstadningSlots\Pages\ListEngangsstadningSlots;
 use App\Models\BookingSlot;
 use App\Models\Service;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
@@ -20,26 +20,31 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
-class BookingSlotResource extends Resource
+class EngangsstadningSlotResource extends Resource
 {
     protected static ?string $model = BookingSlot::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
+    protected static string|\UnitEnum|null $navigationGroup = 'Booking Management';
 
+    protected static ?string $navigationLabel = 'Engångsstädning Slots';
+    protected static ?string $pluralModelLabel = 'Engångsstädning Slots';
+    protected static ?string $modelLabel = 'Engångsstädning Slot';
+    protected static ?int $navigationSort = 61;
     protected static ?string $recordTitleAttribute = 'booking_date';
 
-    protected static ?string $navigationLabel = 'Booking Slots';
-
-    protected static ?string $pluralModelLabel = 'Booking Slots';
-
-    protected static ?string $modelLabel = 'Booking Slot';
-
-    protected static ?int $navigationSort = 60;
-
-    public static function shouldRegisterNavigation(): bool
+    protected static function getServiceId(): ?int
     {
-        return false;
+        return Service::query()->where('slug', 'engangsstadning')->value('id');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $serviceId = static::getServiceId() ?? 0;
+
+        return parent::getEloquentQuery()->where('service_id', $serviceId);
     }
 
     public static function form(Schema $schema): Schema
@@ -47,11 +52,8 @@ class BookingSlotResource extends Resource
         return $schema
             ->columns(2)
             ->components([
-                Select::make('service_id')
-                    ->label('Tjänst')
-                    ->options(fn () => Service::query()->orderBy('sort_order')->pluck('name', 'id')->all())
-                    ->default(fn () => Service::query()->where('slug', 'engangsstadning')->value('id'))
-                    ->searchable()
+                Hidden::make('service_id')
+                    ->default(fn () => static::getServiceId())
                     ->required(),
 
                 DatePicker::make('booking_date')
@@ -94,11 +96,6 @@ class BookingSlotResource extends Resource
         return $table
             ->defaultSort('booking_date', 'asc')
             ->columns([
-                Tables\Columns\TextColumn::make('service.name')
-                    ->label('Tjänst')
-                    ->sortable()
-                    ->searchable(),
-
                 Tables\Columns\TextColumn::make('booking_date')
                     ->label('Datum')
                     ->date('Y-m-d')
@@ -132,10 +129,6 @@ class BookingSlotResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('service_id')
-                    ->label('Tjänst')
-                    ->options(fn () => Service::query()->orderBy('sort_order')->pluck('name', 'id')->all()),
-
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Aktiv'),
 
@@ -156,9 +149,9 @@ class BookingSlotResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListBookingSlots::route('/'),
-            'create' => CreateBookingSlot::route('/create'),
-            'edit' => EditBookingSlot::route('/{record}/edit'),
+            'index' => ListEngangsstadningSlots::route('/'),
+            'create' => CreateEngangsstadningSlot::route('/create'),
+            'edit' => EditEngangsstadningSlot::route('/{record}/edit'),
         ];
     }
 }
